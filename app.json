@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MES-Mobile",
-    "slug": "MES-Mobile",
+    "name": "MES Ngọc An Thư",
+    "slug": "mes-ngoc-an-thu",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
