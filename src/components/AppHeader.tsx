@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Factory, Bell, ChevronLeft } from 'lucide-react-native';
+import { Factory, Bell, ChevronLeft, MessageCircle } from 'lucide-react-native';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigation } from '@react-navigation/native';
 
@@ -29,6 +29,12 @@ export function AppHeader({ title = "NGỌC AN THƯ MES", showBack }: AppHeaderP
       </View>
       
       <View style={styles.headerRightIcons}>
+        <TouchableOpacity style={styles.bellIconBtn} onPress={() => navigation.navigate('ChatList')}>
+          <MessageCircle color="#475569" size={24} />
+          <View style={styles.bellBadge}>
+            <Text style={styles.bellBadgeText}>1</Text>
+          </View>
+        </TouchableOpacity>
         <TouchableOpacity style={styles.bellIconBtn} onPress={() => navigation.navigate('Notification')}>
           <Bell color="#475569" size={24} />
           <View style={styles.bellBadge}>

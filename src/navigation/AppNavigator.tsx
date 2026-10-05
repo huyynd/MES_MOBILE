@@ -18,6 +18,8 @@ import { ProductionPlanScreen } from '@/screens/actions/ProductionPlanScreen';
 import { RecyclingScreen } from '@/screens/recycling/RecyclingScreen';
 import { RecyclingCreateScreen } from '@/screens/recycling/RecyclingCreateScreen';
 import { RecyclingDetailScreen } from '@/screens/recycling/RecyclingDetailScreen';
+import { ChatListScreen } from '@/screens/chat/ChatListScreen';
+import { ChatRoomScreen } from '@/screens/chat/ChatRoomScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -26,6 +28,8 @@ export function AppNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={MainNavigator} />
       <Stack.Screen name="Notification" component={NotificationScreen} />
+      <Stack.Screen name="ChatList" component={ChatListScreen} />
+      <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />
       <Stack.Screen 
         name="CheckIn" 
         component={CheckInScreen} 
