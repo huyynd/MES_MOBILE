@@ -9,40 +9,45 @@ import { Play, Pause, CheckSquare, Trash2, CheckCircle2 } from 'lucide-react-nat
 export function WorkOrderDetailScreen({ route, navigation }: any) {
   const { task } = route.params as { task: ProductionTask };
   
-  // Trạng thái giả định vì API trả về task có thể chỉ có actual_qty
-  const [taskStatus, setTaskStatus] = useState<'Chưa bắt đầu' | 'Đang thực hiện' | 'Hoàn thành'>(
-    task.actual_qty > 0 ? 'Đang thực hiện' : 'Chưa bắt đầu'
+  // Trạng thái lấy từ backend ('Chờ' | 'Đang sản xuất' | 'Dừng sản xuất' | 'Hoàn thành')
+  const [taskStatus, setTaskStatus] = useState<string>(
+    task.status || (task.actual_qty > 0 ? 'Đang sản xuất' : 'Chờ')
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const notStarted = taskStatus === 'Chờ' || taskStatus === 'Dừng sản xuất';
+  const plan = Number(task.quantity) || 0;
 
-  const handleStart = () => {
-    setTaskStatus('Đang thực hiện');
-    // Ở đây có thể gọi API cập nhật trạng thái nếu Backend hỗ trợ
+  const changeStatus = async (status: 'Đang sản xuất' | 'Dừng sản xuất') => {
+    setIsSubmitting(true);
+    try {
+      await productionApi.setTaskStatus(task.task_id, status);
+      setTaskStatus(status);
+    } catch (error: any) {
+      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể đổi trạng thái');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handlePause = () => {
-    setTaskStatus('Chưa bắt đầu');
-    // API tạm dừng
-  };
+  const handleStart = () => changeStatus('Đang sản xuất');
+  const handlePause = () => changeStatus('Dừng sản xuất');
 
   const handleComplete = async () => {
-    Alert.alert('Xác nhận', 'Bạn có chắc chắn muốn hoàn thành Lệnh này?', [
+    if (!task.task_code) return Alert.alert('Lỗi', 'Thiếu mã dòng phân công — hãy mở lại từ danh sách việc.');
+    Alert.alert('Xác nhận', 'Bạn có chắc chắn muốn hoàn thành công đoạn này? Sau khi hoàn thành sẽ bị khóa, không sửa được.', [
       { text: 'Hủy', style: 'cancel' },
-      { 
-        text: 'Hoàn thành', 
+      {
+        text: 'Hoàn thành',
         style: 'default',
         onPress: async () => {
           setIsSubmitting(true);
           try {
-            await productionApi.updateTaskProgress(task.task_id, {
-              actual_qty: task.actual_qty, // Gửi lại số lượng hiện tại
-              status: 'Hoàn thành'
-            });
+            await productionApi.completeTask(task.order_id, task.task_code!);
             setTaskStatus('Hoàn thành');
-            Alert.alert('Thành công', 'Lệnh đã được hoàn thành');
+            Alert.alert('Thành công', 'Đã hoàn thành công đoạn');
             navigation.goBack();
           } catch (error: any) {
-            Alert.alert('Lỗi', error.response?.data?.message || 'Không thể cập nhật tiến độ');
+            Alert.alert('Lỗi', error.response?.data?.message || 'Không thể hoàn thành');
           } finally {
             setIsSubmitting(false);
           }
@@ -60,7 +65,7 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
           <Text style={styles.orderCode}>{task.order_code}</Text>
           <View style={[
             styles.statusBadge, 
-            taskStatus === 'Đang thực hiện' ? styles.statusActive : 
+            taskStatus === 'Đang sản xuất' ? styles.statusActive :
             taskStatus === 'Hoàn thành' ? styles.statusDone : {}
           ]}>
             <Text style={styles.statusText}>{taskStatus}</Text>
@@ -81,14 +86,14 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Máy</Text>
-          <Text style={styles.value}>EX-01 (Mặc định)</Text>
+          <Text style={styles.value}>{task.machine_name || '— (chưa gán)'}</Text>
         </View>
 
         <View style={styles.divider} />
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Kế hoạch</Text>
-          <Text style={styles.valueHighlight}>1.000 {task.unit}</Text>
+          <Text style={styles.valueHighlight}>{plan ? plan.toLocaleString('vi-VN') : '—'} {task.unit}</Text>
         </View>
 
         <View style={styles.infoRow}>
@@ -99,7 +104,7 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
         <View style={styles.infoRow}>
           <Text style={styles.label}>Còn lại</Text>
           <Text style={styles.valueWarning}>
-            {Math.max(1000 - (task.actual_qty || 0), 0)} {task.unit}
+            {plan ? Math.max(plan - (task.actual_qty || 0), 0) : '—'} {task.unit}
           </Text>
         </View>
 
@@ -107,10 +112,11 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
 
       {/* Các nút thao tác */}
       <View style={styles.actionContainer}>
-        {taskStatus === 'Chưa bắt đầu' ? (
-          <Button 
-            title="BẮT ĐẦU" 
-            onPress={handleStart} 
+        {taskStatus === 'Hoàn thành' ? null : notStarted ? (
+          <Button
+            title="BẮT ĐẦU"
+            onPress={handleStart}
+            loading={isSubmitting}
             icon={<Play color="#fff" size={20} />} 
           />
         ) : (
@@ -125,8 +131,8 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
             <Button 
               title="GHI NHẬN SẢN LƯỢNG" 
               onPress={() => {
-                // Ở đây mở Modal hoặc chuyển trang nhập sản lượng
-                Alert.alert('Chức năng', 'Sẽ điều hướng sang trang Nhập Sản Lượng');
+                // TODO Đợt 1: màn nhập sản lượng riêng (gọi productionApi.setActualQty)
+                Alert.alert('Ghi nhận sản lượng', 'Tạm thời dùng ô "Cập nhật nhanh sản lượng" ở Trang chủ.');
               }} 
               icon={<CheckSquare color="#fff" size={20} />} 
               style={{ backgroundColor: '#22c55e' }}

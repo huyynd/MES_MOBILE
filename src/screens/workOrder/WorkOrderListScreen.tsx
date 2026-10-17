@@ -26,10 +26,9 @@ export function WorkOrderListScreen({ navigation }: any) {
         // Chỉ hiển thị các task đang hoạt động hoặc chờ xử lý
         data = allData.filter((t: any) => t.status !== 'Hoàn thành' && t.status !== 'Đã hủy');
       } else {
-        // Công nhân: Lấy các công việc được giao trong ngày
-        const today = new Date().toISOString().split('T')[0];
+        // Công nhân: Lấy các công việc đang mở được giao cho mình
         const workerName = user.linked_worker || user.full_name || user.username;
-        data = await productionApi.getDailyTasks(workerName, today);
+        data = await productionApi.getOpenTasksForWorker(workerName);
       }
 
       setTasks(data || []);

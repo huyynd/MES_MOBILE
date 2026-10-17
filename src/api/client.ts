@@ -1,5 +1,5 @@
 import axios from 'axios';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import { API_BASE_URL } from '@/utils/config';
 
 export const apiClient = axios.create({
@@ -14,7 +14,7 @@ export const apiClient = axios.create({
 apiClient.interceptors.request.use(
   async (config) => {
     try {
-      const token = await AsyncStorage.getItem('jwt_token');
+      const token = await tokenStorage.get();
       if (token && config.headers) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -28,13 +28,22 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Interceptor response: Bắt lỗi 401
+// Interceptor response: 401 (token hết hạn / không hợp lệ) → tự đăng xuất về màn Login.
+// Bỏ qua /auth/login (sai mật khẩu cũng trả 401) và /auth/logout (tránh vòng lặp).
+let loggingOut = false;
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
-    if (error.response && error.response.status === 401) {
-      // Logic xử lý khi token hết hạn sẽ được kết nối với Zustand Store
-      // để tự động logout. Hiện tại ta đẩy qua Promise.reject
+    const url: string = error.config?.url || '';
+    if (error.response?.status === 401 && !url.includes('/auth/login') && !url.includes('/auth/logout') && !loggingOut) {
+      loggingOut = true;
+      try {
+        // require lười để tránh vòng import client ↔ authStore
+        const { useAuthStore } = require('@/store/authStore');
+        await useAuthStore.getState().logout();
+      } finally {
+        loggingOut = false;
+      }
     }
     return Promise.reject(error);
   }

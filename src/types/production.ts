@@ -18,6 +18,12 @@ export interface ProductionTask {
   product_code: string;
   product_name: string;
   unit: string;
-  product_id: string;
+  product_id?: string;
   product_scrap_qty?: number;
+  // Có khi lấy từ /production/execution (cần để ghi SL thực / hoàn thành)
+  task_code?: string;
+  status?: string; // 'Chờ' | 'Đang sản xuất' | 'Dừng sản xuất' | 'Hoàn thành'
+  quantity?: number; // SL kế hoạch của dòng phân công
+  machine_name?: string;
+  assigned_worker?: string;
 }

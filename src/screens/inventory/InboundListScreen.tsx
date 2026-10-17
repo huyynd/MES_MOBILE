@@ -12,6 +12,11 @@ export function InboundListScreen({ navigation }: any) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchTransactions = async () => {
+    if (!inventoryApi.INBOUND_API_READY) {
+      setIsLoading(false);
+      setIsRefreshing(false);
+      return;
+    }
     try {
       const data = await inventoryApi.getPendingInbound();
       setTransactions(data || []);
@@ -65,7 +70,11 @@ export function InboundListScreen({ navigation }: any) {
     <View style={styles.container}>
       {transactions.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Không có phiếu nhập kho nào đang chờ duyệt.</Text>
+          <Text style={styles.emptyText}>
+            {inventoryApi.INBOUND_API_READY
+              ? 'Không có phiếu nhập kho nào đang chờ duyệt.'
+              : 'Chức năng duyệt nhập kho chưa có (đang chờ API backend).'}
+          </Text>
         </View>
       ) : (
         <FlatList

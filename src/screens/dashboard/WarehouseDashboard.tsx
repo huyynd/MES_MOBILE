@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { View, StyleSheet, ScrollView, Text, TouchableOpacity, RefreshControl, FlatList } from 'react-native';
+import { View, StyleSheet, ScrollView, Text, TouchableOpacity, RefreshControl, FlatList, Alert } from 'react-native';
 import { PackageCheck, PackageOpen, ArrowLeftRight, ClipboardCheck, History, Calendar } from 'lucide-react-native';
 import { StatCard } from '@/components/StatCard';
 import { Card } from '@/components/Card';
@@ -33,6 +33,7 @@ export function WarehouseDashboard() {
       });
     } catch (e) {
       console.warn("Lỗi tải dashboard kho:", e);
+      Alert.alert('Lỗi', (e as any)?.response?.data?.message || 'Không tải được dữ liệu kho. Kiểm tra kết nối tới máy chủ.');
     } finally {
       setLoading(false);
     }

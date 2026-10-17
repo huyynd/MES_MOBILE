@@ -1,3 +1,15 @@
-// Tạm thời sử dụng localhost:4000 (dành cho Android Emulator thì dùng 10.0.2.2)
-// Khi test bằng điện thoại thật, cần đổi sang địa chỉ IP LAN của máy tính, ví dụ: 'http://192.168.1.xxx:4000/api'
-export const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'https://procject-mes.onrender.com/api';
+// Địa chỉ backend lấy từ biến môi trường EXPO_PUBLIC_API_URL (đặt trong file .env.local, không commit).
+// Ví dụ khi test bằng điện thoại thật cùng Wi-Fi: EXPO_PUBLIC_API_URL=http://192.168.1.6:4000/api
+// (Android Emulator dùng http://10.0.2.2:4000/api). Đổi .env.local xong phải chạy lại `npx expo start -c`.
+// Cố ý KHÔNG có địa chỉ mặc định — tránh app lỡ trỏ vào máy chủ thật (PRD) hoặc một IP cũ.
+const url = process.env.EXPO_PUBLIC_API_URL;
+
+if (!url) {
+  throw new Error(
+    'Thiếu EXPO_PUBLIC_API_URL. Tạo file .env.local ở thư mục mobile với dòng:\n' +
+    'EXPO_PUBLIC_API_URL=http://<IP-LAN-máy-dev>:4000/api\n' +
+    'rồi chạy lại: npx expo start -c'
+  );
+}
+
+export const API_BASE_URL: string = url.replace(/\/+$/, '');

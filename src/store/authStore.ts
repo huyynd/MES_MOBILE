@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { tokenStorage } from '@/utils/tokenStorage';
 import { User } from '@/types/auth';
 import { authApi } from '@/api/auth';
 
@@ -21,7 +21,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   isLoading: true, // true by default until restoreSession finishes
 
   login: async (token: string, user: User) => {
-    await AsyncStorage.setItem('jwt_token', token);
+    await tokenStorage.set(token);
 
     if (!user.employee_code && user.linked_worker) {
       try {
@@ -47,14 +47,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (e) {
       // Ignore if logout API fails
     } finally {
-      await AsyncStorage.removeItem('jwt_token');
+      await tokenStorage.remove();
       set({ token: null, user: null, isAuthenticated: false });
     }
   },
 
   restoreSession: async () => {
     try {
-      const token = await AsyncStorage.getItem('jwt_token');
+      const token = await tokenStorage.get();
       if (!token) {
         set({ isLoading: false, isAuthenticated: false });
         return;
@@ -83,7 +83,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ token, user, isAuthenticated: true, isLoading: false });
     } catch (error) {
       console.log('Session restore failed', error);
-      await AsyncStorage.removeItem('jwt_token');
+      await tokenStorage.remove();
       set({ token: null, user: null, isAuthenticated: false, isLoading: false });
     }
   },

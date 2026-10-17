@@ -93,11 +93,12 @@ export function HomeDashboard() {
         }
       }
 
-      const data = await productionApi.getDailyTasks(workerName, today);
-      const list: ProductionTask[] = Array.isArray(data) ? data : [];
+      // Việc đang mở (chưa hoàn thành) được giao cho mình
+      const list = await productionApi.getOpenTasksForWorker(workerName);
       setTasks(list);
-      // Lấy lệnh đang thực hiện (actual_qty > 0) hoặc lệnh đầu tiên
-      const inProgress = list.find(t => (t.actual_qty || 0) > 0) || list[0] || null;
+      // Ưu tiên dòng đang sản xuất, sau đó dòng đã có SL, cuối cùng là dòng đầu tiên
+      const inProgress = list.find(t => t.status === 'Đang sản xuất')
+        || list.find(t => (t.actual_qty || 0) > 0) || list[0] || null;
       setActiveTask(inProgress);
       if (inProgress) {
         setQuickInput('0.0');
@@ -123,20 +124,18 @@ export function HomeDashboard() {
 
   const handleQuickSave = async () => {
     if (!activeTask) return Alert.alert('Lỗi', 'Chưa có lệnh sản xuất nào được chọn.');
+    if (!activeTask.task_code) return Alert.alert('Lỗi', 'Thiếu mã dòng phân công — hãy tải lại.');
     const addQty = parseFloat(quickInput);
-    if (addQty <= 0) return Alert.alert('Lỗi', 'Vui lòng nhập số lượng lớn hơn 0.');
+    if (!(addQty > 0)) return Alert.alert('Lỗi', 'Vui lòng nhập số lượng lớn hơn 0.');
     setSaving(true);
     try {
       const newQty = (activeTask.actual_qty || 0) + addQty;
-      await productionApi.updateTaskProgress(activeTask.task_id, {
-        actual_qty: newQty,
-        status: 'Đang thực hiện',
-      });
+      await productionApi.setActualQty(activeTask.order_id, activeTask.task_code, newQty);
       Alert.alert('Thành công', `Đã ghi nhận thêm ${quickInput} ${activeTask.unit || 'KG'}!`);
       setQuickInput('0.0');
       fetchTasks(); // Refresh dữ liệu
     } catch (e: any) {
-      Alert.alert('Lỗi', e?.response?.data?.message || 'Không thể ghi nhận sản lượng.');
+      Alert.alert('Lỗi', e?.response?.data?.message || e?.message || 'Không thể ghi nhận sản lượng.');
     } finally {
       setSaving(false);
     }
@@ -150,7 +149,7 @@ export function HomeDashboard() {
   const workerTotalOutput = tasks.reduce((sum, t) => sum + (Number(t.actual_qty) || 0), 0);
   const workerTotalScrap = tasks.reduce((sum, t) => sum + (Number(t.product_scrap_qty) || 0), 0);
   
-  const workerTotalPlan = tasks.reduce((sum, t: any) => sum + (Number(t.total_qty || t.target_qty || t.planned_qty) || 0), 0);
+  const workerTotalPlan = tasks.reduce((sum, t: any) => sum + (Number(t.quantity || t.total_qty || t.target_qty || t.planned_qty) || 0), 0);
   let workerPerformanceStr = '0%';
   let workerPerformanceStatus = 'Chưa có tiến độ';
   
@@ -553,7 +552,7 @@ export function HomeDashboard() {
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                 <Text style={styles.nextWoCode}>{task.order_code}</Text>
                 <View style={styles.waitingBadge}>
-                  <Text style={styles.waitingBadgeText}>{(task.actual_qty || 0) > 0 ? 'Đang thực hiện' : 'Chờ thực hiện'}</Text>
+                  <Text style={styles.waitingBadgeText}>{task.status || ((task.actual_qty || 0) > 0 ? 'Đang thực hiện' : 'Chờ thực hiện')}</Text>
                 </View>
               </View>
               <Text style={styles.nextWoTitle}>{task.product_name}</Text>

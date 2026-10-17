@@ -3,11 +3,12 @@ import { View, StyleSheet, ScrollView, Text, TouchableOpacity, ActivityIndicator
 import { 
   Filter, Calendar, Users, FileText, 
   AlertTriangle, TrendingUp, TrendingDown,
-  ChevronDown, X, Check
+  ChevronDown, X, Check, User, Activity
 } from 'lucide-react-native';
 import { Card } from '@/components/Card';
 import { reportsApi } from '@/api/reports';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useAuthStore } from '@/store/authStore';
 
 const getWeekStart = () => {
   const d = new Date();
@@ -35,6 +36,11 @@ const getScrapRatio = (scrap: any, actual: any) => {
 
 export function PerformanceDashboard() {
   const insets = useSafeAreaInsets();
+  const { user } = useAuthStore();
+  const isManager = user?.is_admin || (user?.role_name && !user?.role_name.toLowerCase().includes('công nhân'));
+  const workerName = user?.linked_worker || user?.full_name || user?.username || '';
+  const workerTeam = user?.team || '';
+
   const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -61,9 +67,19 @@ export function PerformanceDashboard() {
     else setLoading(true);
 
     try {
-      // Pass fromDate and toDate just like the web version
       const data = await reportsApi.getEmployees({ fromDate, toDate });
-      setWorkers(Array.isArray(data) ? data : []);
+      let filteredData = Array.isArray(data) ? data : [];
+      
+      if (!isManager) {
+        if (workerTeam) {
+          // Chỉ thấy người trong cùng phân xưởng/đội
+          filteredData = filteredData.filter((w: any) => w.team === workerTeam);
+        } else {
+          // Nếu không có đội, chỉ thấy chính mình
+          filteredData = filteredData.filter((w: any) => w.worker === workerName);
+        }
+      }
+      setWorkers(filteredData);
     } catch (error) {
       console.log('Error fetching workers', error);
     } finally {
@@ -108,7 +124,7 @@ export function PerformanceDashboard() {
     <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { height: 60 + insets.top, paddingTop: insets.top }]}>
-        <Text style={styles.headerTitle}>Hiệu suất nhân viên</Text>
+        <Text style={styles.headerTitle}>{isManager ? 'Hiệu suất nhân viên' : 'Hiệu suất KPI'}</Text>
         <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
           <Filter size={20} color="#1d4ed8" />
         </TouchableOpacity>
@@ -142,13 +158,56 @@ export function PerformanceDashboard() {
           </View>
         ) : (
           <>
-            {/* General Report */}
+            {/* KPI Cá Nhân (Cho Công nhân) */}
+            {!isManager && (
+              <Card variant="elevated" style={[styles.reportCard, { borderColor: '#bfdbfe', borderWidth: 1 }]}>
+                <View style={[styles.reportIconBox, { backgroundColor: '#dbeafe' }]}>
+                  <User size={24} color="#1d4ed8" />
+                </View>
+                <Text style={[styles.reportTitle, { color: '#1d4ed8' }]}>KPI Của Bản Thân</Text>
+                <Text style={styles.reportSubtitle}>{workerName}</Text>
+                
+                {(() => {
+                  const myStats = workers.find(w => w.worker === workerName);
+                  if (!myStats) return <Text style={{ marginTop: 10, color: '#64748b' }}>Chưa có số liệu sản xuất.</Text>;
+                  return (
+                    <View style={styles.statsRow}>
+                      <View style={styles.statItem}>
+                        <FileText size={16} color="#d97706" />
+                        <Text style={styles.statValue}>{formatNum(myStats.tasks_count)}</Text>
+                        <Text style={styles.statLabel}>Lệnh</Text>
+                      </View>
+                      <View style={styles.statDivider} />
+                      <View style={styles.statItem}>
+                        <TrendingUp size={16} color="#16a34a" />
+                        <Text style={styles.statValue}>{formatNum(myStats.actual_qty)}</Text>
+                        <Text style={styles.statLabel}>TT</Text>
+                      </View>
+                      <View style={styles.statDivider} />
+                      <View style={styles.statItem}>
+                        <AlertTriangle size={16} color="#ef4444" />
+                        <Text style={styles.statValue}>{formatNum(myStats.scrap_qty)}</Text>
+                        <Text style={styles.statLabel}>Phế</Text>
+                      </View>
+                      <View style={styles.statDivider} />
+                      <View style={styles.statItem}>
+                        <Activity size={16} color="#ef4444" />
+                        <Text style={styles.statValue}>{getScrapRatio(myStats.scrap_qty, myStats.actual_qty)}</Text>
+                        <Text style={styles.statLabel}>Tỷ lệ phế</Text>
+                      </View>
+                    </View>
+                  );
+                })()}
+              </Card>
+            )}
+
+            {/* General Report (KPI của đội nhóm hoặc toàn nhà máy) */}
             <Card variant="elevated" style={styles.reportCard}>
               <View style={styles.reportIconBox}>
                 <Users size={24} color="#4f46e5" />
               </View>
-              <Text style={styles.reportTitle}>Báo cáo chung</Text>
-              <Text style={styles.reportSubtitle}>Hiệu suất tổng quan của nhân viên</Text>
+              <Text style={styles.reportTitle}>{isManager ? 'Báo cáo chung' : `KPI Đội Nhóm (${workerTeam})`}</Text>
+              <Text style={styles.reportSubtitle}>{isManager ? 'Hiệu suất tổng quan của nhân viên' : 'Hiệu suất tổng quan của đội'}</Text>
               
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
@@ -247,7 +306,7 @@ export function PerformanceDashboard() {
 
             {/* Defect Rate List */}
             <View style={styles.listSection}>
-              <Text style={styles.listSectionTitle}>Danh sách Tỷ lệ Phế / 1kg thành phẩm</Text>
+              <Text style={styles.listSectionTitle}>Danh sách {isManager ? 'Tỷ lệ Phế / 1kg thành phẩm' : `Thành viên trong đội (${workerTeam})`}</Text>
               
               <Card variant="elevated" style={styles.listCard}>
                 <View style={styles.listHeader}>
@@ -261,7 +320,9 @@ export function PerformanceDashboard() {
                   workers.map((w, i) => (
                     <View key={w.worker} style={[styles.listItem, i === workers.length - 1 && { borderBottomWidth: 0 }]}>
                       <View style={{ flex: 2 }}>
-                        <Text style={styles.itemName} numberOfLines={1}>{w.worker}</Text>
+                        <Text style={[styles.itemName, w.worker === workerName && { color: '#1d4ed8', fontWeight: 'bold' }]} numberOfLines={1}>
+                          {w.worker} {w.worker === workerName ? '(Bạn)' : ''}
+                        </Text>
                         <Text style={styles.itemSub} numberOfLines={1}>{w.team || w.stages || '—'}</Text>
                       </View>
                       <Text style={[styles.itemValue, { flex: 1.5, textAlign: 'right' }]}>{formatNum(w.actual_qty)}</Text>
