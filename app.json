@@ -12,7 +12,6 @@
     "android": {
       "package": "vn.ngocanthu.mes",
       "blockedPermissions": [
-        "android.permission.CAMERA",
         "android.permission.RECORD_AUDIO",
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_COARSE_LOCATION",
@@ -20,7 +19,8 @@
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
         "android.permission.READ_EXTERNAL_STORAGE",
-        "android.permission.WRITE_EXTERNAL_STORAGE"
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.SYSTEM_ALERT_WINDOW"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -34,7 +34,23 @@
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "Cho phép MES Ngọc An Thư dùng camera để chụp ảnh làm bằng chứng sản xuất (sản phẩm, phế phẩm, sự cố máy).",
+          "photosPermission": "Cho phép MES Ngọc An Thư chọn ảnh có sẵn để đính kèm làm bằng chứng.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Cho phép MES Ngọc An Thư dùng camera để chụp ảnh và quét mã QR lệnh sản xuất.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ]
     ]
   }
 }
