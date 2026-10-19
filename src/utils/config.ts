@@ -14,6 +14,9 @@ if (!url) {
 
 // Bản phát hành (không phải chạy thử) BẮT BUỘC HTTPS: HTTP để lộ mật khẩu/phiên qua Wi-Fi,
 // và Android bản release cũng chặn HTTP. Chạy thử (expo start) vẫn cho http://IP-LAN.
+if (url.includes('DIEN-TEN-MIEN-MAY-CHU')) {
+  throw new Error('Chưa điền địa chỉ máy chủ thật trong eas.json (EXPO_PUBLIC_API_URL).');
+}
 if (!__DEV__ && !/^https:\/\//i.test(url)) {
   throw new Error('Bản phát hành phải dùng địa chỉ máy chủ HTTPS (EXPO_PUBLIC_API_URL=https://...).');
 }
