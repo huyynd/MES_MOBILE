@@ -12,6 +12,7 @@ import { SettingsScreen } from '@/screens/profile/SettingsScreen';
 import { OutboundCreateScreen } from '@/screens/inventory/OutboundCreateScreen';
 import { NotificationScreen } from '@/screens/notifications/NotificationScreen';
 import { OutboundApprovalScreen } from '@/screens/inventory/OutboundApprovalScreen';
+import { WarehouseDashboard } from '@/screens/dashboard/WarehouseDashboard';
 import { WOSearchScreen } from '@/screens/actions/WOSearchScreen';
 import { ShiftApprovalScreen } from '@/screens/actions/ShiftApprovalScreen';
 import { ProductionPlanScreen } from '@/screens/actions/ProductionPlanScreen';
@@ -27,6 +28,8 @@ export function AppNavigator() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="MainTabs" component={MainNavigator} />
+      {/* Tổng quan kho — giám đốc mở từ Báo cáo → Kho */}
+      <Stack.Screen name="WarehouseOverview" component={WarehouseDashboard} />
       <Stack.Screen name="Notification" component={NotificationScreen} />
       <Stack.Screen name="ChatList" component={ChatListScreen} />
       <Stack.Screen name="ChatRoom" component={ChatRoomScreen} />

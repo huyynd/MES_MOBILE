@@ -130,7 +130,7 @@ export function WarehouseDashboard() {
 
   return (
     <View style={[styles.wrapper, { paddingTop: Math.max(insets.top, 0) }]}>
-      <AppHeader />
+      <AppHeader title="TỔNG QUAN KHO" showBack={navigation.canGoBack()} />
       <ScrollView 
         style={styles.container}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={loadData} />}

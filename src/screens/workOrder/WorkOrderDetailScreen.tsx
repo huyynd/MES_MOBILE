@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Alert, TextInput } from 'react-native';
+import { errMsg } from '@/utils/errors';
+import { num } from '@/utils/format';
 import { Card } from '@/components/Card';
 import { Button } from '@/components/Button';
 import { productionApi } from '@/api/production';
 import { ProductionTask } from '@/types/production';
-import { Play, Pause, CheckSquare, Trash2, CheckCircle2 } from 'lucide-react-native';
+import { Play, Pause, CheckSquare, CheckCircle2 } from 'lucide-react-native';
 
 export function WorkOrderDetailScreen({ route, navigation }: any) {
   const { task } = route.params as { task: ProductionTask };
@@ -14,6 +16,27 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
     task.status || (task.actual_qty > 0 ? 'Đang sản xuất' : 'Chờ')
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [actual, setActual] = useState<number>(Number(task.actual_qty) || 0);
+  const [addQty, setAddQty] = useState('');
+
+  // Ghi thêm sản lượng: SL thực mới = SL hiện tại + số vừa nhập (cùng đường với màn chi tiết lệnh trên web)
+  const handleAddQty = async () => {
+    if (!task.task_code) return Alert.alert('Lỗi', 'Thiếu mã dòng phân công — hãy mở lại từ danh sách việc.');
+    const add = Number(String(addQty).replace(',', '.'));
+    if (!(add > 0)) return Alert.alert('Lỗi', 'Nhập số lượng lớn hơn 0.');
+    setIsSubmitting(true);
+    try {
+      await productionApi.setActualQty(task.order_id, task.task_code, actual + add);
+      setActual(actual + add);
+      setAddQty('');
+      if (taskStatus === 'Chờ') setTaskStatus('Đang sản xuất');
+      Alert.alert('Đã ghi nhận', `+${num(add, 2)} ${task.unit || ''}`);
+    } catch (error) {
+      Alert.alert('Lỗi', errMsg(error, 'Không ghi được sản lượng.'));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
   const notStarted = taskStatus === 'Chờ' || taskStatus === 'Dừng sản xuất';
   const plan = Number(task.quantity) || 0;
 
@@ -23,7 +46,7 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
       await productionApi.setTaskStatus(task.task_id, status);
       setTaskStatus(status);
     } catch (error: any) {
-      Alert.alert('Lỗi', error.response?.data?.message || 'Không thể đổi trạng thái');
+      Alert.alert('Lỗi', errMsg(error, 'Không thể đổi trạng thái'));
     } finally {
       setIsSubmitting(false);
     }
@@ -47,7 +70,7 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
             Alert.alert('Thành công', 'Đã hoàn thành công đoạn');
             navigation.goBack();
           } catch (error: any) {
-            Alert.alert('Lỗi', error.response?.data?.message || 'Không thể hoàn thành');
+            Alert.alert('Lỗi', errMsg(error, 'Không thể hoàn thành'));
           } finally {
             setIsSubmitting(false);
           }
@@ -98,13 +121,13 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Đã sản xuất</Text>
-          <Text style={styles.valueSuccess}>{task.actual_qty || 0} {task.unit}</Text>
+          <Text style={styles.valueSuccess}>{num(actual, 2)} {task.unit}</Text>
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Còn lại</Text>
           <Text style={styles.valueWarning}>
-            {plan ? Math.max(plan - (task.actual_qty || 0), 0) : '—'} {task.unit}
+            {plan ? num(Math.max(plan - actual, 0), 2) : '—'} {task.unit}
           </Text>
         </View>
 
@@ -128,23 +151,17 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
               icon={<Pause color="#334155" size={20} />} 
             />
             
-            <Button 
-              title="GHI NHẬN SẢN LƯỢNG" 
-              onPress={() => {
-                // TODO Đợt 1: màn nhập sản lượng riêng (gọi productionApi.setActualQty)
-                Alert.alert('Ghi nhận sản lượng', 'Tạm thời dùng ô "Cập nhật nhanh sản lượng" ở Trang chủ.');
-              }} 
-              icon={<CheckSquare color="#fff" size={20} />} 
+            <TextInput style={styles.qtyInput} value={addQty} onChangeText={setAddQty}
+              placeholder={`+ Số lượng vừa làm (${task.unit || 'kg'})`} keyboardType="decimal-pad" />
+            <Button
+              title="GHI NHẬN SẢN LƯỢNG"
+              onPress={handleAddQty}
+              loading={isSubmitting}
+              icon={<CheckSquare color="#fff" size={20} />}
               style={{ backgroundColor: '#22c55e' }}
             />
-            
-            <Button 
-              title="GHI NHẬN PHẾ" 
-              variant="danger" 
-              onPress={() => navigation.navigate('ScrapReport', { task })} 
-              icon={<Trash2 color="#fff" size={20} />} 
-            />
-            
+            {/* Ghi phế: tạm ẩn — ngoài phạm vi mobile (web ghi phế theo công nhân/ngày) */}
+
             <View style={{ height: 16 }} />
             
             <Button 
@@ -162,6 +179,7 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
 }
 
 const styles = StyleSheet.create({
+  qtyInput: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 12, paddingHorizontal: 14, height: 48, fontSize: 16, backgroundColor: '#fff' },
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/Button';
-import { User, Clock, Calendar, FileText, Settings, LogOut, ChevronRight } from 'lucide-react-native';
+import { Clock, LogOut, ChevronRight } from 'lucide-react-native';
+import { isDirector } from '@/utils/roles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 
@@ -11,7 +12,7 @@ export function ProfileScreen() {
   const navigation = useNavigation<any>();
   const insets = useSafeAreaInsets();
   
-  const isManager = user?.is_admin || user?.role_name?.toLowerCase().includes('quản lý') || user?.role_name?.toLowerCase().includes('manager');
+  const director = isDirector(user);
 
   const handleLogout = () => {
     Alert.alert('Đăng xuất', 'Bạn có chắc chắn muốn đăng xuất?', [
@@ -47,30 +48,26 @@ export function ProfileScreen() {
 
       {/* Menu List */}
       <View style={styles.menuSection}>
-        <Text style={styles.sectionTitle}>CÁ NHÂN</Text>
-        <View style={styles.menuCard}>
-          <MenuItem icon={User} title={isManager ? "Quản lý nhân viên" : "Thông tin cá nhân"} onPress={() => navigation.navigate('PersonalInfo')} />
-          <View style={styles.divider} />
-          <MenuItem icon={Clock} title="Ca làm việc" onPress={() => navigation.navigate('WorkSchedule')} />
-          <View style={styles.divider} />
-          <MenuItem icon={Calendar} title={isManager ? "Phê duyệt công ca" : "Lịch sử chấm công"} onPress={() => navigation.navigate(isManager ? 'ShiftApproval' : 'AttendanceHistory')} />
+        <Text style={styles.sectionTitle}>TÀI KHOẢN</Text>
+        <View style={[styles.menuCard, { padding: 16, gap: 6 }]}>
+          <Text style={styles.infoLine}>Tên đăng nhập: <Text style={styles.infoStrong}>{user?.username}</Text></Text>
+          <Text style={styles.infoLine}>Vai trò: <Text style={styles.infoStrong}>{user?.role_name || '—'}</Text></Text>
+          <Text style={styles.infoLine}>Công nhân liên kết: <Text style={styles.infoStrong}>{user?.linked_worker || 'chưa gắn'}</Text></Text>
+          <Text style={styles.infoLine}>Giao diện: <Text style={styles.infoStrong}>{director ? 'Giám đốc' : 'Công nhân'}</Text></Text>
         </View>
       </View>
 
       <View style={styles.menuSection}>
-        <Text style={styles.sectionTitle}>NHÂN SỰ</Text>
+        <Text style={styles.sectionTitle}>CÁ NHÂN</Text>
         <View style={styles.menuCard}>
-          <MenuItem icon={FileText} title={isManager ? "Phê duyệt giải trình" : "Giải trình công"} onPress={() => navigation.navigate('AttendanceAppeal')} />
-          <View style={styles.divider} />
-          <MenuItem icon={FileText} title={isManager ? "Duyệt nghỉ phép" : "Nghỉ phép"} onPress={() => navigation.navigate('LeaveRequest')} />
+          <MenuItem icon={Clock} title="Lịch ca làm việc" onPress={() => navigation.navigate('WorkSchedule')} />
+          {/* Thông tin cá nhân, chấm công, giải trình, nghỉ phép, duyệt ca: tạm ẩn — dữ liệu giả, chưa có API */}
         </View>
       </View>
 
       <View style={styles.menuSection}>
         <Text style={styles.sectionTitle}>HỆ THỐNG</Text>
         <View style={styles.menuCard}>
-          <MenuItem icon={Settings} title="Cài đặt" onPress={() => navigation.navigate('Settings')} />
-          <View style={styles.divider} />
           <MenuItem icon={LogOut} title="Đăng xuất" color="#ef4444" onPress={handleLogout} />
         </View>
       </View>
@@ -80,6 +77,8 @@ export function ProfileScreen() {
 }
 
 const styles = StyleSheet.create({
+  infoLine: { fontSize: 14, color: '#64748b' },
+  infoStrong: { color: '#0f172a', fontWeight: '700' },
   container: {
     flex: 1,
     backgroundColor: '#f8fafc',

@@ -11,7 +11,7 @@ export function WorkOrderNavigator() {
       <Stack.Screen 
         name="WorkOrderList" 
         component={WorkOrderListScreen} 
-        options={{ title: 'Lệnh Sản Xuất' }}
+        options={{ title: 'Công việc', headerShown: false }}
       />
       <Stack.Screen 
         name="WorkOrderDetail" 

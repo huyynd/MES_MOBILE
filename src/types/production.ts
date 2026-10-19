@@ -26,4 +26,10 @@ export interface ProductionTask {
   quantity?: number; // SL kế hoạch của dòng phân công
   machine_name?: string;
   assigned_worker?: string;
+  shift?: string | null;
+  planned_date?: string | null; // YYYY-MM-DD
+  planned_end_date?: string | null;
+  due_date?: string | null;
+  // Tính ở app: vì sao việc nằm trong "hôm nay"
+  when?: 'running' | 'today' | 'overdue' | 'unplanned' | 'future';
 }

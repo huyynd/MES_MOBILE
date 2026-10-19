@@ -1,3 +1,4 @@
+import { errMsg } from '@/utils/errors';
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { ArrowLeft, Check, Ban, PackageOpen, ChevronDown, ChevronUp } from 'lucide-react-native';
@@ -21,7 +22,7 @@ export function OutboundApprovalScreen() {
       const data = await inventoryApi.getOutboundSlips({ status: 'Chờ xuất' });
       setSlips(data || []);
     } catch (e: any) {
-      Alert.alert('Lỗi', e.message || 'Không thể tải danh sách phiếu chờ xuất');
+      Alert.alert('Lỗi', errMsg(e, 'Không thể tải danh sách phiếu chờ xuất'));
     } finally {
       setLoading(false);
     }
@@ -44,7 +45,7 @@ export function OutboundApprovalScreen() {
         const detail = await inventoryApi.getOutboundSlip(id);
         setDetailMap(prev => ({ ...prev, [id]: detail }));
       } catch (e: any) {
-        Alert.alert('Lỗi', e.message || 'Không thể tải chi tiết phiếu');
+        Alert.alert('Lỗi', errMsg(e, 'Không thể tải chi tiết phiếu'));
       }
     }
   };

@@ -1,92 +1,104 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
+import React, { useCallback, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl, TextInput } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ChevronRight, Search } from 'lucide-react-native';
 import { productionApi } from '@/api/production';
 import { ProductionTask } from '@/types/production';
 import { useAuthStore } from '@/store/authStore';
 import { Card } from '@/components/Card';
-import { Button } from '@/components/Button';
-import { LoadingScreen } from '@/components/LoadingScreen';
-import { ClipboardList } from 'lucide-react-native';
+import { C, StateView, Badge, Segmented } from '@/components/ui';
+import { WHEN_BADGE } from '@/screens/home/WorkerHome';
+import { isDirector, workerNameOf } from '@/utils/roles';
+import { todayLocal, shortDate } from '@/utils/date';
+import { num } from '@/utils/format';
+import { errMsg } from '@/utils/errors';
+
+type Filter = 'today' | 'all';
 
 export function WorkOrderListScreen({ navigation }: any) {
+  const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
+  const director = isDirector(user);
+  const workerName = workerNameOf(user);
+
   const [tasks, setTasks] = useState<ProductionTask[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>('today');
+  const [q, setQ] = useState('');
 
-  const fetchTasks = async () => {
-    if (!user) return;
+  const load = useCallback(async (isRefresh = false) => {
+    if (!director && !workerName) { setLoading(false); return; }
+    isRefresh ? setRefreshing(true) : setLoading(true);
+    setError(null);
     try {
-      let data: ProductionTask[] = [];
-      const isManager = user.is_admin || (user.role_name && !user.role_name.toLowerCase().includes('công nhân'));
-
-      if (isManager) {
-        // Quản lý: Lấy tất cả các lệnh đang thực thi
-        const allData = await productionApi.getExecutionTasks({});
-        // Chỉ hiển thị các task đang hoạt động hoặc chờ xử lý
-        data = allData.filter((t: any) => t.status !== 'Hoàn thành' && t.status !== 'Đã hủy');
-      } else {
-        // Công nhân: Lấy các công việc đang mở được giao cho mình
-        const workerName = user.linked_worker || user.full_name || user.username;
-        data = await productionApi.getOpenTasksForWorker(workerName);
-      }
-
-      setTasks(data || []);
-    } catch (error) {
-      console.error('Failed to fetch tasks', error);
+      const today = todayLocal();
+      // Công nhân: chỉ việc của mình. Giám đốc: mọi việc đang mở trong nhà máy.
+      const open = await productionApi.getOpenTasks(today, director ? undefined : workerName);
+      setTasks(open);
+    } catch (e) {
+      setError(errMsg(e, 'Không tải được danh sách công việc.'));
     } finally {
-      setIsLoading(false);
-      setIsRefreshing(false);
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [director, workerName]);
 
-  useEffect(() => {
-    fetchTasks();
-  }, []);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  const onRefresh = () => {
-    setIsRefreshing(true);
-    fetchTasks();
-  };
-
-  if (isLoading) return <LoadingScreen message="Đang tải danh sách công việc..." />;
+  const keyword = q.trim().toLowerCase();
+  const shown = tasks
+    .filter((t) => (filter === 'all' ? true : t.when !== 'future'))
+    .filter((t) => !keyword || [t.order_code, t.product_name, t.step_name, t.assigned_worker, t.machine_name]
+      .some((v) => String(v || '').toLowerCase().includes(keyword)));
 
   const renderItem = ({ item }: { item: ProductionTask }) => (
-    <Card variant="elevated" style={styles.card}>
-      <Text style={styles.orderCode}>{item.order_code}</Text>
-      <Text style={styles.detailText}>Sản phẩm: <Text style={styles.strong}>{item.product_name}</Text></Text>
-      <Text style={styles.detailText}>Công đoạn: <Text style={styles.strong}>{item.step_name}</Text></Text>
-      <Text style={styles.detailText}>Đã làm: <Text style={styles.strong}>{item.actual_qty || 0} {item.unit}</Text></Text>
-      
-      <View style={styles.actionRow}>
-        <Button 
-          title="XEM CHI TIẾT" 
-          variant="secondary"
-          onPress={() => navigation.navigate('WorkOrderDetail', { task: item })}
-          style={styles.detailBtn}
-        />
-      </View>
-    </Card>
+    <TouchableOpacity onPress={() => navigation.navigate('WorkOrderDetail', { task: item })} activeOpacity={0.8}>
+      <Card variant="outlined" style={styles.card}>
+        <View style={{ flex: 1 }}>
+          <View style={styles.head}>
+            <Text style={styles.code}>{item.order_code} · {item.step_name}</Text>
+            <Badge {...WHEN_BADGE[item.when || 'today']} />
+          </View>
+          <Text style={styles.product} numberOfLines={1}>{item.product_name}</Text>
+          <Text style={styles.meta}>
+            {num(item.actual_qty, 2)} / {num(item.quantity, 2)} {item.unit} · KH {shortDate(item.planned_date)}
+            {director ? ` · ${item.assigned_worker || 'chưa giao'}` : ''}{item.machine_name ? ` · ${item.machine_name}` : ''}
+          </Text>
+        </View>
+        <ChevronRight color={C.muted} size={18} />
+      </Card>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>CÔNG VIỆC HÔM NAY</Text>
+      <View style={[styles.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={styles.headerTitle}>{director ? 'CÔNG VIỆC TOÀN XƯỞNG' : 'CÔNG VIỆC CỦA TÔI'}</Text>
       </View>
-      
-      {tasks.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <ClipboardList size={48} color="#cbd5e1" style={{ marginBottom: 16 }} />
-          <Text style={styles.emptyText}>Hôm nay bạn chưa được phân công công việc nào.</Text>
-        </View>
+      <View style={styles.tools}>
+        <Segmented<Filter> options={[{ key: 'today', label: 'Hôm nay' }, { key: 'all', label: 'Tất cả đang mở' }]} value={filter} onChange={setFilter} />
+        {director && (
+          <View style={styles.search}>
+            <Search size={16} color={C.muted} />
+            <TextInput style={styles.searchInput} value={q} onChangeText={setQ} placeholder="Tìm lệnh, sản phẩm, công nhân, máy…" />
+          </View>
+        )}
+      </View>
+      {!director && !workerName ? (
+        <StateView empty={'Tài khoản chưa được gắn công nhân.\nNhờ quản lý vào web → Tài khoản → chọn "Công nhân liên kết".'} />
+      ) : (loading || error) ? (
+        <StateView loading={loading} error={error} onRetry={() => load()} />
       ) : (
         <FlatList
-          data={tasks}
-          keyExtractor={(item, index) => item.task_id || index.toString()}
+          data={shown}
+          keyExtractor={(item, index) => String(item.task_id || index)}
           renderItem={renderItem}
-          contentContainerStyle={styles.listContent}
-          refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} colors={['#1d4ed8']} />}
+          contentContainerStyle={styles.list}
+          ListEmptyComponent={<StateView empty={filter === 'today' ? 'Hôm nay chưa có việc nào.' : 'Không có việc nào đang mở.'} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} colors={[C.blue]} />}
         />
       )}
     </View>
@@ -94,58 +106,16 @@ export function WorkOrderListScreen({ navigation }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f8fafc',
-  },
-  header: {
-    padding: 16,
-    paddingTop: 48,
-    backgroundColor: '#1d4ed8',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#ffffff',
-  },
-  listContent: {
-    padding: 16,
-  },
-  card: {
-    padding: 20,
-    marginBottom: 16,
-  },
-  orderCode: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0f172a',
-    marginBottom: 12,
-  },
-  detailText: {
-    fontSize: 15,
-    color: '#475569',
-    marginBottom: 6,
-  },
-  strong: {
-    fontWeight: '700',
-    color: '#0f172a',
-  },
-  actionRow: {
-    marginTop: 16,
-  },
-  detailBtn: {
-    height: 48,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#94a3b8',
-    textAlign: 'center',
-    fontWeight: '500',
-  }
+  container: { flex: 1, backgroundColor: C.bg },
+  header: { paddingHorizontal: 16, paddingBottom: 14, backgroundColor: C.blue },
+  headerTitle: { fontSize: 18, fontWeight: '800', color: '#fff' },
+  tools: { paddingHorizontal: 16 },
+  search: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: C.line, paddingHorizontal: 10, height: 40 },
+  searchInput: { flex: 1, fontSize: 14 },
+  list: { padding: 16, paddingTop: 8 },
+  card: { flexDirection: 'row', alignItems: 'center', gap: 8, marginVertical: 4 },
+  head: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 },
+  code: { fontSize: 15, fontWeight: '800', color: C.blue, flexShrink: 1 },
+  product: { fontSize: 14, color: C.text, marginTop: 4 },
+  meta: { fontSize: 12, color: C.sub, marginTop: 4 },
 });

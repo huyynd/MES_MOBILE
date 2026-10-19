@@ -1,69 +1,31 @@
 import React from 'react';
-import { View, TouchableOpacity, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, ClipboardList, Hammer, Package, User, Activity } from 'lucide-react-native';
+import { Home, ClipboardList, BarChart2, User, Activity } from 'lucide-react-native';
 
 import { DashboardScreen } from '@/screens/dashboard/DashboardScreen';
 import { WorkOrderNavigator } from '@/navigation/WorkOrderNavigator';
-import { QuickActionScreen } from '@/screens/actions/QuickActionScreen';
-import { WarehouseDashboard } from '@/screens/dashboard/WarehouseDashboard';
 import { PerformanceDashboard } from '@/screens/dashboard/PerformanceDashboard';
+import { ReportsScreen } from '@/screens/reports/ReportsScreen';
 import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 import { useAuthStore } from '@/store/authStore';
+import { isDirector } from '@/utils/roles';
 
 const Tab = createBottomTabNavigator();
 
-const CustomTabBarButton = ({ children, onPress }: any) => (
-  <TouchableOpacity
-    style={{
-      top: -24,
-      justifyContent: 'center',
-      alignItems: 'center',
-    }}
-    onPress={onPress}
-    activeOpacity={0.9}
-  >
-    <View style={{
-      width: 68,
-      height: 68,
-      borderRadius: 34,
-      backgroundColor: '#ffffff',
-      justifyContent: 'center',
-      alignItems: 'center',
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.05,
-      shadowRadius: 8,
-      elevation: 3,
-    }}>
-      <View style={{
-        width: 56,
-        height: 56,
-        borderRadius: 28,
-        backgroundColor: '#1d4ed8', // Premium Blue
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#1d4ed8',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.4,
-        shadowRadius: 8,
-      }}>
-        {children}
-      </View>
-    </View>
-  </TouchableOpacity>
-);
-
+// Mobile chỉ phục vụ 2 nhóm:
+//  - Công nhân: Trang chủ (việc hôm nay) · Công việc · Hiệu suất (của mình) · Cá nhân
+//  - Giám đốc:  Trang chủ (tổng quan) · Công việc (toàn xưởng) · Báo cáo · Hiệu suất (mọi người) · Cá nhân
+// Nút giữa "thao tác nhanh" (phế, tái chế, xuất kho, chấm công...) đã bỏ — ngoài phạm vi; các màn đó vẫn giữ code.
 export function MainNavigator() {
   const { user } = useAuthStore();
-  const isManager = user?.is_admin || (user?.role_name && !user?.role_name.toLowerCase().includes('công nhân'));
-  const isWorker = !isManager;
+  const director = isDirector(user);
   const insets = useSafeAreaInsets();
 
   return (
     <Tab.Navigator
       screenOptions={{
+        headerShown: false,
         tabBarActiveTintColor: '#1d4ed8',
         tabBarInactiveTintColor: '#94a3b8',
         tabBarStyle: {
@@ -86,66 +48,36 @@ export function MainNavigator() {
         }
       }}
     >
-      <Tab.Screen 
-        name="Home" 
-        component={DashboardScreen} 
-        options={{ 
-          title: 'Trang chủ',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => <Home color={color} size={size} />
-        }} 
-      />
-      
-      <Tab.Screen 
-        name="WorkOrder" 
-        component={WorkOrderNavigator} 
-        options={{ 
-          headerShown: false,
-          title: 'Công việc',
-          tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} />
-        }} 
+      <Tab.Screen
+        name="Home"
+        component={DashboardScreen}
+        options={{ title: 'Trang chủ', tabBarIcon: ({ color, size }) => <Home color={color} size={size} /> }}
       />
 
-      <Tab.Screen 
-        name="QRScan" 
-        component={QuickActionScreen} 
-        options={{ 
-          title: '', // No title for floating button
-          tabBarIcon: () => <Hammer color="#ffffff" size={24} />,
-          tabBarButton: (props) => <CustomTabBarButton {...props} />
-        }} 
+      <Tab.Screen
+        name="WorkOrder"
+        component={WorkOrderNavigator}
+        options={{ title: 'Công việc', tabBarIcon: ({ color, size }) => <ClipboardList color={color} size={size} /> }}
       />
 
-      {isWorker ? (
-        <Tab.Screen 
-          name="Performance" 
-          component={PerformanceDashboard} 
-          options={{ 
-            title: 'Hiệu suất',
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => <Activity color={color} size={size} />
-          }} 
-        />
-      ) : (
-        <Tab.Screen 
-          name="Warehouse" 
-          component={WarehouseDashboard} 
-          options={{ 
-            title: 'Kho',
-            headerShown: false,
-            tabBarIcon: ({ color, size }) => <Package color={color} size={size} />
-          }} 
+      {director && (
+        <Tab.Screen
+          name="Reports"
+          component={ReportsScreen}
+          options={{ title: 'Báo cáo', tabBarIcon: ({ color, size }) => <BarChart2 color={color} size={size} /> }}
         />
       )}
 
-      <Tab.Screen 
-        name="Profile" 
-        component={ProfileScreen} 
-        options={{ 
-          title: 'Cá nhân',
-          headerShown: false,
-          tabBarIcon: ({ color, size }) => <User color={color} size={size} />
-        }} 
+      <Tab.Screen
+        name="Performance"
+        component={PerformanceDashboard}
+        options={{ title: 'Hiệu suất', tabBarIcon: ({ color, size }) => <Activity color={color} size={size} /> }}
+      />
+
+      <Tab.Screen
+        name="Profile"
+        component={ProfileScreen}
+        options={{ title: 'Cá nhân', tabBarIcon: ({ color, size }) => <User color={color} size={size} /> }}
       />
     </Tab.Navigator>
   );

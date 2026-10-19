@@ -9,20 +9,13 @@ import { Card } from '@/components/Card';
 import { reportsApi } from '@/api/reports';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/authStore';
+import { isDirector, workerNameOf } from '@/utils/roles';
+import { todayLocal, weekStartLocal, monthStartLocal } from '@/utils/date';
 
-const getWeekStart = () => {
-  const d = new Date();
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(d.setDate(diff)).toISOString().slice(0, 10);
-};
-
-const getMonthStart = () => {
-  const d = new Date();
-  return new Date(d.getFullYear(), d.getMonth(), 1).toISOString().slice(0, 10);
-};
-
-const getToday = () => new Date().toISOString().slice(0, 10);
+// Ngày theo giờ điện thoại (toISOString theo UTC làm lệch 1 ngày từ 0h–7h sáng)
+const getWeekStart = weekStartLocal;
+const getMonthStart = monthStartLocal;
+const getToday = todayLocal;
 
 const formatNum = (num: any) => Number(num || 0).toLocaleString('vi-VN');
 
@@ -37,9 +30,8 @@ const getScrapRatio = (scrap: any, actual: any) => {
 export function PerformanceDashboard() {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
-  const isManager = user?.is_admin || (user?.role_name && !user?.role_name.toLowerCase().includes('công nhân'));
-  const workerName = user?.linked_worker || user?.full_name || user?.username || '';
-  const workerTeam = user?.team || '';
+  const isManager = isDirector(user);
+  const workerName = workerNameOf(user);
 
   const [workers, setWorkers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -71,13 +63,8 @@ export function PerformanceDashboard() {
       let filteredData = Array.isArray(data) ? data : [];
       
       if (!isManager) {
-        if (workerTeam) {
-          // Chỉ thấy người trong cùng phân xưởng/đội
-          filteredData = filteredData.filter((w: any) => w.team === workerTeam);
-        } else {
-          // Nếu không có đội, chỉ thấy chính mình
-          filteredData = filteredData.filter((w: any) => w.worker === workerName);
-        }
+        // Công nhân: chỉ số liệu của chính mình (chưa gắn công nhân liên kết → không có gì)
+        filteredData = workerName ? filteredData.filter((w: any) => w.worker === workerName) : [];
       }
       setWorkers(filteredData);
     } catch (error) {
@@ -169,7 +156,7 @@ export function PerformanceDashboard() {
                 
                 {(() => {
                   const myStats = workers.find(w => w.worker === workerName);
-                  if (!myStats) return <Text style={{ marginTop: 10, color: '#64748b' }}>Chưa có số liệu sản xuất.</Text>;
+                  if (!myStats) return <Text style={{ marginTop: 10, color: '#64748b' }}>{workerName ? 'Chưa có số liệu sản xuất trong kỳ này.' : 'Tài khoản chưa được gắn công nhân — nhờ quản lý gắn "Công nhân liên kết" trên web.'}</Text>;
                   return (
                     <View style={styles.statsRow}>
                       <View style={styles.statItem}>
@@ -201,12 +188,13 @@ export function PerformanceDashboard() {
               </Card>
             )}
 
-            {/* General Report (KPI của đội nhóm hoặc toàn nhà máy) */}
+            {/* Báo cáo chung toàn nhà máy — chỉ giám đốc (công nhân chỉ xem số của chính mình) */}
+            {isManager && (<>
             <Card variant="elevated" style={styles.reportCard}>
               <View style={styles.reportIconBox}>
                 <Users size={24} color="#4f46e5" />
               </View>
-              <Text style={styles.reportTitle}>{isManager ? 'Báo cáo chung' : `KPI Đội Nhóm (${workerTeam})`}</Text>
+              <Text style={styles.reportTitle}>Báo cáo chung</Text>
               <Text style={styles.reportSubtitle}>{isManager ? 'Hiệu suất tổng quan của nhân viên' : 'Hiệu suất tổng quan của đội'}</Text>
               
               <View style={styles.statsRow}>
@@ -306,7 +294,7 @@ export function PerformanceDashboard() {
 
             {/* Defect Rate List */}
             <View style={styles.listSection}>
-              <Text style={styles.listSectionTitle}>Danh sách {isManager ? 'Tỷ lệ Phế / 1kg thành phẩm' : `Thành viên trong đội (${workerTeam})`}</Text>
+              <Text style={styles.listSectionTitle}>Danh sách Tỷ lệ Phế / 1kg thành phẩm</Text>
               
               <Card variant="elevated" style={styles.listCard}>
                 <View style={styles.listHeader}>
@@ -337,6 +325,7 @@ export function PerformanceDashboard() {
                 )}
               </Card>
             </View>
+            </>)}
           </>
         )}
 

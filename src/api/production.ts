@@ -16,7 +16,22 @@ const fromExecutionRow = (r: any): ProductionTask => ({
   unit: r.unit,
   machine_name: r.machine_name,
   assigned_worker: r.assigned_worker,
+  shift: r.shift,
+  planned_date: r.planned_date ? String(r.planned_date).slice(0, 10) : null,
+  planned_end_date: r.planned_end_date ? String(r.planned_end_date).slice(0, 10) : null,
+  due_date: r.due_date ? String(r.due_date).slice(0, 10) : null,
 });
+
+// Xếp 1 việc chưa xong vào nhóm theo ngày (so chuỗi YYYY-MM-DD)
+const classify = (t: ProductionTask, today: string): ProductionTask['when'] => {
+  if (t.status === 'Đang sản xuất') return 'running';
+  const start = t.planned_date, end = t.planned_end_date || t.planned_date;
+  if (!start) return 'unplanned';
+  if (end && end < today) return 'overdue';
+  if (start <= today) return 'today';
+  return 'future';
+};
+const WHEN_ORDER = { running: 0, overdue: 1, today: 2, unplanned: 3, future: 4 } as const;
 
 export const productionApi = {
   // Lấy các lệnh SX (Work Orders) của công nhân trong ngày
@@ -45,10 +60,19 @@ export const productionApi = {
     return (response.data.data || []).map(fromExecutionRow);
   },
 
-  // Việc đang mở (chưa hoàn thành) được giao cho worker
-  getOpenTasksForWorker: async (workerName: string): Promise<ProductionTask[]> => {
-    const all = await productionApi.getExecutionTasks({ worker: workerName });
-    return all.filter((t) => t.status !== 'Hoàn thành' && t.status !== 'Đã hủy');
+  // Việc đang mở (chưa hoàn thành) — lọc theo worker nếu có; gắn nhóm ngày (when) và xếp: đang làm → trễ → hôm nay → chưa lịch → sắp tới
+  getOpenTasks: async (today: string, workerName?: string): Promise<ProductionTask[]> => {
+    const all = await productionApi.getExecutionTasks(workerName ? { worker: workerName } : {});
+    return all
+      .filter((t) => t.status !== 'Hoàn thành' && t.status !== 'Đã hủy')
+      .map((t) => ({ ...t, when: classify(t, today) }))
+      .sort((a, b) => WHEN_ORDER[a.when!] - WHEN_ORDER[b.when!] || String(a.planned_date || '').localeCompare(String(b.planned_date || '')));
+  },
+
+  // "Việc hôm nay" của công nhân: đang làm + kế hoạch hôm nay + trễ hạn chưa xong + chưa lên lịch (bỏ việc ngày tới)
+  getTodayTasksForWorker: async (workerName: string, today: string): Promise<ProductionTask[]> => {
+    const open = await productionApi.getOpenTasks(today, workerName);
+    return open.filter((t) => t.when !== 'future');
   },
 
   // Đổi trạng thái vận hành (Đang sản xuất / Dừng sản xuất / Chờ).

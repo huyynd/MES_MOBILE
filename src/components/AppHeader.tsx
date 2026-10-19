@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Factory, Bell, ChevronLeft, MessageCircle } from 'lucide-react-native';
+import { Factory, ChevronLeft } from 'lucide-react-native';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigation } from '@react-navigation/native';
 
@@ -29,18 +29,7 @@ export function AppHeader({ title = "NGỌC AN THƯ MES", showBack }: AppHeaderP
       </View>
       
       <View style={styles.headerRightIcons}>
-        <TouchableOpacity style={styles.bellIconBtn} onPress={() => navigation.navigate('ChatList')}>
-          <MessageCircle color="#475569" size={24} />
-          <View style={styles.bellBadge}>
-            <Text style={styles.bellBadgeText}>1</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.bellIconBtn} onPress={() => navigation.navigate('Notification')}>
-          <Bell color="#475569" size={24} />
-          <View style={styles.bellBadge}>
-            <Text style={styles.bellBadgeText}>4</Text>
-          </View>
-        </TouchableOpacity>
+        {/* Chat / Thông báo: tạm ẩn — chưa có API (dữ liệu và số đếm cũ là giả). Màn vẫn giữ code. */}
         <TouchableOpacity style={styles.avatarIconBtn} onPress={() => navigation.navigate('Profile')}>
           <Text style={styles.avatarIconText}>{user?.full_name?.charAt(0) || 'U'}</Text>
         </TouchableOpacity>
