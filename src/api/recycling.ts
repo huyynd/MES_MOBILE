@@ -1,4 +1,4 @@
-import apiClient from './client';
+import { apiClient } from './client';
 
 export const recyclingApi = {
   list: async (params: any = {}) => {
@@ -31,26 +31,6 @@ export const recyclingApi = {
     }
   },
 
-  update: async (id: string, data: any) => {
-    try {
-      const response = await apiClient.put(`/recycling/${id}`, data);
-      return response.data;
-    } catch (error) {
-      console.error(`Error updating recycling record ${id}:`, error);
-      throw error;
-    }
-  },
-
-  delete: async (id: string) => {
-    try {
-      const response = await apiClient.delete(`/recycling/${id}`);
-      return response.data;
-    } catch (error) {
-      console.error(`Error deleting recycling record ${id}:`, error);
-      throw error;
-    }
-  },
-
   weigh: async (id: string, data: any) => {
     try {
       const response = await apiClient.put(`/recycling/${id}/weigh`, data);
@@ -59,6 +39,11 @@ export const recyclingApi = {
       console.error(`Error weighing recycling record ${id}:`, error);
       throw error;
     }
+  },
+
+  receiveRolls: async (id: string, rolls: { weight: number; pe_type?: string; unit?: string; note?: string }[]) => {
+    const response = await apiClient.put(`/recycling/${id}/receive`, { rolls });
+    return response.data;
   },
 
   complete: async (id: string, data: any) => {

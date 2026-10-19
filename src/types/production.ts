@@ -11,7 +11,10 @@ export interface DailyWorkOrder {
 
 export interface ProductionTask {
   task_id: string;
+  task_code?: string;
   step_name: string; // stage in db
+  status?: string;
+  quantity?: number;
   actual_qty: number;
   order_id: string;
   order_code: string;
@@ -20,4 +23,6 @@ export interface ProductionTask {
   unit: string;
   product_id: string;
   product_scrap_qty?: number;
+  machine_name?: string;
+  assigned_worker?: string;
 }

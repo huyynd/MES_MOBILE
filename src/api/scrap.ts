@@ -1,11 +1,13 @@
-import apiClient from './client';
+import { apiClient } from './client';
 import { ScrapReportPayload, ScrapReportResponse } from '@/types/scrap';
 
 export const scrapApi = {
   // Lấy danh sách công nhân
-  getWorkers: async (date?: string): Promise<string[]> => {
-    const response = await apiClient.get<string[]>(`/scrap/workers${date ? `?date=${date}` : ''}`);
-    return response.data;
+  getWorkers: async (): Promise<string[]> => {
+    const response = await apiClient.get<(string | { name?: string })[]>('/scrap/workers');
+    return response.data
+      .map((worker) => typeof worker === 'string' ? worker : worker.name)
+      .filter((worker): worker is string => Boolean(worker));
   },
 
   // Lấy dữ liệu phế phẩm đã ghi nhận trong ngày của 1 công nhân
@@ -29,13 +31,7 @@ export const scrapApi = {
         worker_name: payload.reported_by,
         record_date: payload.record_date || new Date().toISOString().split('T')[0],
         note: payload.reason,
-        items: [
-          {
-            product_id: payload.product_id,
-            scrap_qty: payload.scrap_qty,
-            finished_qty: 0 
-          }
-        ]
+        scrap_qty: payload.scrap_qty,
       };
 
       const response = await apiClient.post<any>('/scrap/records', backendPayload);
