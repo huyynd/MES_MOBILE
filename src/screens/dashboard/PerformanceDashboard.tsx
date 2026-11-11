@@ -19,12 +19,13 @@ const getToday = todayLocal;
 
 const formatNum = (num: any) => Number(num || 0).toLocaleString('vi-VN');
 
+// "Phế / 1 kg TP" = kg phế ÷ kg thành phẩm (cùng định nghĩa và cách hiển thị với web, 3 chữ số thập phân).
+// Khác "Tỷ lệ phế" (%) = phế ÷ (thành phẩm + phế) — chỉ số đó nằm ở Báo cáo giám đốc.
 const getScrapRatio = (scrap: any, actual: any) => {
   const s = Number(scrap) || 0;
   const a = Number(actual) || 0;
-  if (a === 0) return '0%';
-  const ratio = (s / a) * 100;
-  return ratio.toFixed(2) + '%';
+  if (a === 0) return '—';
+  return (s / a).toLocaleString('vi-VN', { minimumFractionDigits: 3, maximumFractionDigits: 3 });
 };
 
 export function PerformanceDashboard() {
@@ -168,7 +169,7 @@ export function PerformanceDashboard() {
                       <View style={styles.statItem}>
                         <TrendingUp size={16} color="#16a34a" />
                         <Text style={styles.statValue}>{formatNum(myStats.actual_qty)}</Text>
-                        <Text style={styles.statLabel}>TT</Text>
+                        <Text style={styles.statLabel}>Thành phẩm</Text>
                       </View>
                       <View style={styles.statDivider} />
                       <View style={styles.statItem}>
@@ -180,7 +181,7 @@ export function PerformanceDashboard() {
                       <View style={styles.statItem}>
                         <Activity size={16} color="#ef4444" />
                         <Text style={styles.statValue}>{getScrapRatio(myStats.scrap_qty, myStats.actual_qty)}</Text>
-                        <Text style={styles.statLabel}>Tỷ lệ phế</Text>
+                        <Text style={styles.statLabel}>Phế / 1 kg TP</Text>
                       </View>
                     </View>
                   );
@@ -213,7 +214,7 @@ export function PerformanceDashboard() {
                 <View style={styles.statItem}>
                   <TrendingUp size={16} color="#16a34a" />
                   <Text style={styles.statValue}>{formatNum(totalActual)}</Text>
-                  <Text style={styles.statLabel}>TT</Text>
+                  <Text style={styles.statLabel}>Thành phẩm</Text>
                 </View>
                 <View style={styles.statDivider} />
                 <View style={styles.statItem}>
@@ -294,14 +295,14 @@ export function PerformanceDashboard() {
 
             {/* Defect Rate List */}
             <View style={styles.listSection}>
-              <Text style={styles.listSectionTitle}>Danh sách Tỷ lệ Phế / 1kg thành phẩm</Text>
+              <Text style={styles.listSectionTitle}>Danh sách Phế / 1 kg TP (kg phế ÷ kg thành phẩm)</Text>
               
               <Card variant="elevated" style={styles.listCard}>
                 <View style={styles.listHeader}>
                   <Text style={[styles.listCol, { flex: 2 }]}>Nhân viên</Text>
                   <Text style={[styles.listCol, { flex: 1.5, textAlign: 'right' }]}>Thành phẩm</Text>
                   <Text style={[styles.listCol, { flex: 1.5, textAlign: 'right' }]}>Phế phẩm</Text>
-                  <Text style={[styles.listCol, { flex: 1, textAlign: 'right' }]}>Tỷ lệ</Text>
+                  <Text style={[styles.listCol, { flex: 1, textAlign: 'right' }]}>Phế/1kg TP</Text>
                 </View>
                 
                 {workers.length > 0 ? (

@@ -60,11 +60,24 @@ function Summary() {
           </StatRow>
 
           <SectionTitle icon={<Factory size={18} color={C.blue} />} title="Sản xuất" />
+          {/* Cùng định nghĩa với web (Báo cáo giám đốc, 11/2026):
+              - Thành phẩm = làm ra TRONG KỲ ở công đoạn cuối, kể cả lệnh tạo trước kỳ (actual)
+              - Tiến độ / còn lại = theo các lệnh TẠO trong kỳ (progress, remaining)
+              - Tỷ lệ phế = phế ÷ (thành phẩm + phế) */}
           <StatRow>
-            <Stat label="Kế hoạch" value={num(p?.output?.plan, 1)} sub="kg" />
-            <Stat label="Thực tế" value={num(p?.output?.actual, 1)} sub={`còn ${num(p?.output?.remaining, 1)} kg`} tone="green" />
-            <Stat label="Phế" value={num(p?.output?.scrap, 1)} sub={`tỷ lệ ${pct(p?.output?.scrap_rate)}`} tone="amber" />
+            <Stat label="SL thành phẩm" value={num(p?.output?.actual, 1)} sub="kg làm ra trong kỳ" tone="green" />
+            <Stat label="Phế" value={num(p?.output?.scrap, 1)}
+              sub={`tỷ lệ phế ${p?.output?.scrap_rate == null ? '—' : pct(p?.output?.scrap_rate)}`} tone="amber" />
           </StatRow>
+          <Card variant="outlined">
+            <Text style={styles.cardTitle}>Tiến độ lệnh tạo trong kỳ</Text>
+            <Row label="Kế hoạch" value={`${num(p?.output?.plan, 1)} kg`} />
+            <Row label="Đã làm" value={`${num(p?.output?.progress ?? p?.output?.actual, 1)} kg`} tone="green" />
+            <Row label="Đạt" value={p?.output?.plan > 0 ? pct(((p?.output?.progress ?? p?.output?.actual) || 0) / p.output.plan * 100, 0) : '—'} />
+            {p?.output?.over > 0
+              ? <Row label="Vượt kế hoạch" value={`${num(p.output.over, 1)} kg`} tone="blue" />
+              : <Row label="Còn lại" value={`${num(p?.output?.remaining, 1)} kg`} tone="amber" />}
+          </Card>
           <Card variant="outlined">
             <Row label="Tổng lệnh" value={num(p?.orders?.total)} />
             <Row label="Hoàn thành" value={num(p?.orders?.done)} tone="green" />
@@ -99,6 +112,10 @@ function Summary() {
           <StatRow>
             <Stat label="Đi làm" value={`${num(w?.active_count)}/${num(w?.worker_count)}`} sub="công nhân có sản lượng" tone="blue" />
             <Stat label="Sản lượng" value={num(w?.total_output, 1)} sub={`${num(w?.avg_per_hour, 1)} kg/giờ TB`} tone="green" />
+          </StatRow>
+          <StatRow>
+            <Stat label="Phế / 1 kg TP (TB)" value={w?.scrap_ratio == null ? '—' : num(w.scrap_ratio, 3)} sub="kg phế ÷ kg thành phẩm" tone="amber" />
+            <Stat label="Tổng phế" value={num(w?.total_scrap, 1)} sub="kg" />
           </StatRow>
           {(w?.top || []).length > 0 && (
             <Card variant="outlined">
@@ -189,6 +206,12 @@ function Debt() {
             <Stat label="Tổng còn nợ" value={money(total)} sub={`${rows.filter((x) => Number(x.debt) > 0).length} khách`} tone="red" />
             <Stat label={`Quá ${num(r.data?.settings?.bad_days)} ngày`} value={money(overdue)} tone="amber" />
           </StatRow>
+          {rows.some((x) => Number(x.credit) > 0) && (
+            <StatRow>
+              <Stat label="Khách trả trước" value={money(rows.reduce((t, x) => t + (Number(x.credit) || 0), 0))}
+                sub={`${rows.filter((x) => Number(x.credit) > 0).length} khách — tự trừ khi giao phiếu mới`} tone="green" />
+            </StatRow>
+          )}
           {rows.map((x) => (
             <Card key={x.customer_id} variant="outlined" style={styles.machine}>
               <View style={{ flex: 1 }}>
@@ -197,6 +220,7 @@ function Debt() {
               </View>
               <View style={{ alignItems: 'flex-end', gap: 4 }}>
                 <Text style={[styles.mName, { color: Number(x.debt) > 0 ? C.red : C.green }]}>{money(x.debt)}</Text>
+                {Number(x.credit) > 0 ? <Text style={styles.mSub}>trả trước {money(x.credit)}</Text> : null}
                 {x.is_bad ? <Badge text="Nợ xấu" tone="red" /> : x.over_limit ? <Badge text="Vượt hạn mức" tone="amber" /> : null}
               </View>
             </Card>
