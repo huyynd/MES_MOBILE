@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert } from 'react-native';
 import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/Button';
-import { Clock, LogOut, ChevronRight } from 'lucide-react-native';
+import { Clock, LogOut, ChevronRight, Fingerprint } from 'lucide-react-native';
+import { useKioskStore } from '@/store/kioskStore';
 import { isDirector } from '@/utils/roles';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,7 +22,17 @@ export function ProfileScreen() {
     ]);
   };
 
-  const MenuItem = ({ icon: Icon, title, onPress, color = "#334155" }: any) => (
+  // Máy tính bảng của tổ: đăng xuất tài khoản đang dùng rồi chuyển sang chế độ máy chấm công (dùng chung cả tổ)
+  const setKioskMode = useKioskStore((st) => st.setMode);
+  const handleKioskMode = () => {
+    Alert.alert('Máy chấm công của tổ',
+      'Máy này sẽ đăng xuất tài khoản hiện tại và chuyển sang màn chấm công dùng chung cho cả tổ. Tiếp tục?', [
+        { text: 'Hủy', style: 'cancel' },
+        { text: 'Chuyển', onPress: async () => { await logout(); await setKioskMode(true); } },
+      ]);
+  };
+
+  const MenuItem =({ icon: Icon, title, onPress, color = "#334155" }: any) => (
     <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.menuIconContainer}>
         <Icon size={22} color={color} />
@@ -68,6 +79,8 @@ export function ProfileScreen() {
       <View style={styles.menuSection}>
         <Text style={styles.sectionTitle}>HỆ THỐNG</Text>
         <View style={styles.menuCard}>
+          <MenuItem icon={Fingerprint} title="Dùng máy này làm máy chấm công của tổ" color="#1d4ed8" onPress={handleKioskMode} />
+          <View style={styles.divider} />
           <MenuItem icon={LogOut} title="Đăng xuất" color="#ef4444" onPress={handleLogout} />
         </View>
       </View>
