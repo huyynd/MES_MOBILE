@@ -5,6 +5,8 @@ import { LoadingScreen } from '@/components/LoadingScreen';
 import { AuthNavigator } from './AuthNavigator';
 import { AppNavigator } from './AppNavigator';
 import apiClient from '@/api/client';
+import { useKioskStore } from '@/store/kioskStore';
+import { KioskScreen } from '@/screens/kiosk/KioskScreen';
 
 export function RootNavigator() {
   const { isAuthenticated, isLoading, restoreSession, logout } = useAuthStore();
@@ -30,8 +32,16 @@ export function RootNavigator() {
     };
   }, [logout]);
 
-  if (isLoading) {
+  const { mode: kioskMode, load: loadKiosk, setMode: setKioskMode } = useKioskStore();
+  useEffect(() => { loadKiosk(); }, [loadKiosk]);
+
+  if (isLoading || kioskMode === null) {
     return <LoadingScreen message="Đang kiểm tra phiên đăng nhập..." />;
+  }
+
+  // Máy chấm công của tổ: không dùng phiên đăng nhập app
+  if (kioskMode) {
+    return <KioskScreen onExit={() => setKioskMode(false)} />;
   }
 
   return (

@@ -5,9 +5,11 @@ import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { authApi } from '@/api/auth';
 import { useAuthStore } from '@/store/authStore';
-import { User, Lock, Eye, EyeOff, LogIn, CheckSquare, Square, Mail, ArrowLeft } from 'lucide-react-native';
+import { User, Lock, Eye, EyeOff, LogIn, CheckSquare, Square, Mail, ArrowLeft, Clock } from 'lucide-react-native';
+import { useKioskStore } from '@/store/kioskStore';
 
 export function LoginScreen() {
+  const setKioskMode = useKioskStore((st) => st.setMode);
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [employeeName, setEmployeeName] = useState('');
@@ -160,6 +162,12 @@ export function LoginScreen() {
             )}
           </View>
 
+          {/* Máy tính bảng của tổ: chuyển sang chế độ máy chấm công (nhân viên đăng nhập + chụp ảnh để chấm) */}
+          <TouchableOpacity style={styles.kioskLink} onPress={() => setKioskMode(true)}>
+            <Clock size={18} color="#1d4ed8" />
+            <Text style={styles.kioskLinkText}>Dùng máy này làm máy chấm công của tổ</Text>
+          </TouchableOpacity>
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>Mobile MES v3.4.2 • Bản quyền Bao Bì Ngọc An Thư</Text>
           </View>
@@ -262,6 +270,8 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#0f172a',
   },
+  kioskLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginTop: 20, paddingVertical: 12 },
+  kioskLinkText: { color: '#1d4ed8', fontSize: 15, fontWeight: '700' },
   footer: {
     marginTop: 'auto',
     alignItems: 'center',
