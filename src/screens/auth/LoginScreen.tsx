@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, KeyboardAvoidingView, Platform, ScrollView, Alert, TouchableOpacity, ImageBackground } from 'react-native';
+import { StyleSheet, Text, View, KeyboardAvoidingView, Platform, ScrollView, Alert, TouchableOpacity } from 'react-native';
+import { BrandLogo } from '@/components/BrandLogo';
 import { Button } from '@/components/Button';
 import { Input } from '@/components/Input';
 import { authApi } from '@/api/auth';
@@ -52,14 +53,15 @@ export function LoginScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ImageBackground 
-        source={{ uri: 'https://img.freepik.com/free-vector/smart-factory-concept-illustration_114360-3944.jpg?w=1000' }} 
-        style={styles.background}
-        imageStyle={{ opacity: 0.3 }}
-      >
+      {/* Nền: logo Ngọc An Thư mờ phía sau (không còn tải ảnh từ Internet) */}
+      <View style={styles.background}>
+        <View style={styles.watermark} pointerEvents="none">
+          <BrandLogo size={520} />
+        </View>
         <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          
+
           <View style={styles.headerContainer}>
+            <BrandLogo size={150} />
             <Text style={styles.systemTitle}>Hệ thống MES</Text>
             <Text style={styles.systemSubtitle}>Bao Bì Ngọc An Thư • Điều hành sản xuất</Text>
           </View>
@@ -163,7 +165,7 @@ export function LoginScreen() {
           </View>
 
         </ScrollView>
-      </ImageBackground>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -177,6 +179,14 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+    backgroundColor: '#f8fafc',
+    overflow: 'hidden',
+  },
+  watermark: {
+    position: 'absolute',
+    right: -140,
+    bottom: -60,
+    opacity: 0.06,
   },
   scrollContent: {
     flexGrow: 1,

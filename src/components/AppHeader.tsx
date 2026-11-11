@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Factory, ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
+import { BrandLogo } from '@/components/BrandLogo';
 import { useAuthStore } from '@/store/authStore';
 import { useNavigation } from '@react-navigation/native';
 
@@ -22,7 +23,7 @@ export function AppHeader({ title = "NGỌC AN THƯ MES", showBack }: AppHeaderP
           </TouchableOpacity>
         ) : (
           <View style={styles.logoIconContainer}>
-            <Factory color="#ffffff" size={16} />
+            <BrandLogo variant="mark" size={34} />
           </View>
         )}
         <Text style={styles.headerTitle}>{title}</Text>
@@ -54,10 +55,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   logoIconContainer: {
-    width: 32,
+    width: 40,
     height: 32,
-    backgroundColor: '#1d4ed8',
-    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 10,
