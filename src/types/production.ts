@@ -26,6 +26,7 @@ export interface ProductionTask {
   quantity?: number; // SL kế hoạch của dòng phân công
   machine_name?: string;
   assigned_worker?: string;
+  assigned_worker_id?: string | null; // mã nhân viên (employees.id) — lọc việc theo tổ
   shift?: string | null;
   planned_date?: string | null; // YYYY-MM-DD
   planned_end_date?: string | null;

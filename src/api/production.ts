@@ -16,6 +16,7 @@ const fromExecutionRow = (r: any): ProductionTask => ({
   unit: r.unit,
   machine_name: r.machine_name,
   assigned_worker: r.assigned_worker,
+  assigned_worker_id: r.assigned_worker_id || null,
   shift: r.shift,
   planned_date: r.planned_date ? String(r.planned_date).slice(0, 10) : null,
   planned_end_date: r.planned_end_date ? String(r.planned_end_date).slice(0, 10) : null,

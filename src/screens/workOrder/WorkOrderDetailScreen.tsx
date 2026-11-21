@@ -9,7 +9,7 @@ import { ProductionTask } from '@/types/production';
 import { Play, Pause, CheckSquare, CheckCircle2 } from 'lucide-react-native';
 
 export function WorkOrderDetailScreen({ route, navigation }: any) {
-  const { task } = route.params as { task: ProductionTask };
+  const { task, actor } = route.params as { task: ProductionTask; actor?: string }; // actor: tablet tổ trưởng — công nhân đang điền kết quả
   
   // Trạng thái lấy từ backend ('Chờ' | 'Đang sản xuất' | 'Dừng sản xuất' | 'Hoàn thành')
   const [taskStatus, setTaskStatus] = useState<string>(
@@ -102,6 +102,13 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
           <Text style={styles.value}>{task.product_name}</Text>
         </View>
         
+        {(actor || task.assigned_worker) && (
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Người làm</Text>
+            <Text style={[styles.value, { fontWeight: "800" }]}>{actor || task.assigned_worker}</Text>
+          </View>
+        )}
+
         <View style={styles.infoRow}>
           <Text style={styles.label}>Công đoạn</Text>
           <Text style={styles.value}>{task.step_name}</Text>
