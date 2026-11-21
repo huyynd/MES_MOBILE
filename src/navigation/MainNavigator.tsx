@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Home, ClipboardList, BarChart2, User, Activity } from 'lucide-react-native';
+import { Home, ClipboardList, BarChart2, User, Activity, Clock } from 'lucide-react-native';
 
 import { DashboardScreen } from '@/screens/dashboard/DashboardScreen';
 import { WorkOrderNavigator } from '@/navigation/WorkOrderNavigator';
@@ -10,6 +10,8 @@ import { ReportsScreen } from '@/screens/reports/ReportsScreen';
 import { ProfileScreen } from '@/screens/profile/ProfileScreen';
 import { useAuthStore } from '@/store/authStore';
 import { isDirector } from '@/utils/roles';
+import { TeamAttendanceScreen } from '@/screens/attendance/TeamAttendanceScreen';
+import { teamApi } from '@/api/team';
 
 const Tab = createBottomTabNavigator();
 
@@ -21,6 +23,9 @@ export function MainNavigator() {
   const { user } = useAuthStore();
   const director = isDirector(user);
   const insets = useSafeAreaInsets();
+  // Tab Chấm công: chỉ hiện khi tài khoản là TỔ TRƯỞNG (máy chủ trả danh sách tổ được). Công nhân không có tài khoản.
+  const [teamLeader, setTeamLeader] = React.useState(false);
+  React.useEffect(() => { let ok = true; teamApi.roster().then(() => ok && setTeamLeader(true)).catch(() => ok && setTeamLeader(false)); return () => { ok = false; }; }, [user?.id]);
 
   return (
     <Tab.Navigator
@@ -73,6 +78,14 @@ export function MainNavigator() {
         component={PerformanceDashboard}
         options={{ title: 'Hiệu suất', tabBarIcon: ({ color, size }) => <Activity color={color} size={size} /> }}
       />
+
+      {teamLeader && (
+        <Tab.Screen
+          name="TeamAttendance"
+          component={TeamAttendanceScreen}
+          options={{ title: 'Chấm công', tabBarIcon: ({ color, size }) => <Clock color={color} size={size} /> }}
+        />
+      )}
 
       <Tab.Screen
         name="Profile"
