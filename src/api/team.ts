@@ -38,7 +38,11 @@ export type TeamMember = {
   id: string; name: string; employee_code: string; has_pin: boolean; pin_locked: boolean;
   today: { direction: 'IN' | 'OUT'; at: string }[];
 };
-export type TeamRoster = { unit_id: string; unit_name: string; now: string; consent_version: string; employees: TeamMember[] };
+export type TeamRoster = {
+  unit_id: string; unit_name: string; now: string; consent_version: string; employees: TeamMember[];
+  shift?: { name: string; start: string; end: string } | null; // ca làm việc của tổ
+  work_today?: boolean; // hôm nay có phải ngày làm của tổ
+};
 export type TeamIdentify = {
   session: string;
   employee: { id: string; name: string; employee_code: string };
