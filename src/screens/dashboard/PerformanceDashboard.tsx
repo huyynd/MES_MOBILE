@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuthStore } from '@/store/authStore';
 import { isDirector, workerNameOf } from '@/utils/roles';
 import { todayLocal, weekStartLocal, monthStartLocal } from '@/utils/date';
+import { teamApi, TeamRoster } from '@/api/team';
 
 // Ngày theo giờ điện thoại (toISOString theo UTC làm lệch 1 ngày từ 0h–7h sáng)
 const getWeekStart = weekStartLocal;
@@ -31,7 +32,9 @@ const getScrapRatio = (scrap: any, actual: any) => {
 export function PerformanceDashboard() {
   const insets = useSafeAreaInsets();
   const { user } = useAuthStore();
-  const isManager = isDirector(user);
+  // Tablet tổ trưởng (chốt 2026-11-21): xem hiệu suất CẢ TỔ — tổng, xếp hạng, từng thành viên (chỉ người trong tổ)
+  const [team, setTeam] = useState<TeamRoster | null>(null);
+  const isManager = isDirector(user) || !!team;
   const workerName = workerNameOf(user);
 
   const [workers, setWorkers] = useState<any[]>([]);
@@ -60,10 +63,17 @@ export function PerformanceDashboard() {
     else setLoading(true);
 
     try {
-      const data = await reportsApi.getEmployees({ fromDate, toDate });
+      const [data, roster] = await Promise.all([
+        reportsApi.getEmployees({ fromDate, toDate }),
+        teamApi.roster().catch(() => null),
+      ]);
+      setTeam(roster);
       let filteredData = Array.isArray(data) ? data : [];
-      
-      if (!isManager) {
+
+      if (roster) {
+        const ids = new Set(roster.employees.map((e) => e.id));
+        filteredData = filteredData.filter((w: any) => ids.has(w.employee_id));
+      } else if (!isDirector(user)) {
         // Công nhân: chỉ số liệu của chính mình (chưa gắn công nhân liên kết → không có gì)
         filteredData = workerName ? filteredData.filter((w: any) => w.worker === workerName) : [];
       }
@@ -112,7 +122,7 @@ export function PerformanceDashboard() {
     <View style={styles.container}>
       {/* Header */}
       <View style={[styles.header, { height: 60 + insets.top, paddingTop: insets.top }]}>
-        <Text style={styles.headerTitle}>{isManager ? 'Hiệu suất nhân viên' : 'Hiệu suất KPI'}</Text>
+        <Text style={styles.headerTitle}>{team ? `Hiệu suất ${team.unit_name}` : isManager ? 'Hiệu suất nhân viên' : 'Hiệu suất KPI'}</Text>
         <TouchableOpacity style={styles.filterBtn} onPress={() => setShowFilter(true)}>
           <Filter size={20} color="#1d4ed8" />
         </TouchableOpacity>
@@ -196,7 +206,7 @@ export function PerformanceDashboard() {
                 <Users size={24} color="#4f46e5" />
               </View>
               <Text style={styles.reportTitle}>Báo cáo chung</Text>
-              <Text style={styles.reportSubtitle}>{isManager ? 'Hiệu suất tổng quan của nhân viên' : 'Hiệu suất tổng quan của đội'}</Text>
+              <Text style={styles.reportSubtitle}>{team ? `Hiệu suất các thành viên ${team.unit_name}` : isManager ? 'Hiệu suất tổng quan của nhân viên' : 'Hiệu suất tổng quan của đội'}</Text>
               
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
