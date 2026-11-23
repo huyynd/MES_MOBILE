@@ -128,13 +128,22 @@ export function WorkerHome() {
                   <Text style={styles.product}>{active.product_name}</Text>
                   <Text style={styles.meta}>Máy: {active.machine_name || '—'} · Ca: {active.shift || '—'} · KH: {shortDate(active.planned_date)}</Text>
                   <Text style={styles.progress}>Đã làm {num(active.actual_qty, 2)} / {num(active.quantity, 2)} {active.unit}</Text>
-                  <View style={styles.qtyRow}>
-                    <TextInput style={styles.qtyInput} value={addQty} onChangeText={setAddQty} placeholder={`+ Số lượng (${active.unit || 'kg'})`} keyboardType="decimal-pad" />
-                    <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={saveQty} disabled={saving}>
-                      {saving ? <ActivityIndicator color="#fff" size="small" /> : <Save color="#fff" size={16} />}
-                      <Text style={styles.saveText}>Ghi nhận</Text>
+                  {active.step_name === 'Thổi' || active.step_name === 'Cắt' ? (
+                    // Thổi / Cắt ghi theo CUỘN (chốt 2026-11-23) — mở khung ghi cuộn nhanh ở màn chi tiết
+                    <TouchableOpacity style={[styles.saveBtn, { marginTop: 10, justifyContent: 'center', height: 52 }]}
+                      onPress={() => navigation.navigate('WorkOrder', { screen: 'WorkOrderDetail', params: { task: active } })}>
+                      <Save color="#fff" size={18} />
+                      <Text style={[styles.saveText, { fontSize: 16 }]}>Ghi cuộn →</Text>
                     </TouchableOpacity>
-                  </View>
+                  ) : (
+                    <View style={styles.qtyRow}>
+                      <TextInput style={styles.qtyInput} value={addQty} onChangeText={setAddQty} placeholder={`+ Số lượng (${active.unit || 'kg'})`} keyboardType="decimal-pad" />
+                      <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={saveQty} disabled={saving}>
+                        {saving ? <ActivityIndicator color="#fff" size="small" /> : <Save color="#fff" size={16} />}
+                        <Text style={styles.saveText}>Ghi nhận</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )}
                   <TouchableOpacity onPress={() => navigation.navigate('WorkOrder', { screen: 'WorkOrderDetail', params: { task: active } })}>
                     <Text style={styles.link}>Chi tiết / Hoàn thành →</Text>
                   </TouchableOpacity>

@@ -101,6 +101,20 @@ export const productionApi = {
     return response.data;
   },
 
+  // GHI CUỘN NHANH (chốt 2026-11-23): mỗi số kg = 1 cuộn = 1 dòng mới có mã cuộn, hoàn thành + nhập kho ngay.
+  // Dòng việc được giao (taskCode) giữ nguyên để ghi tiếp. finish = kết thúc việc (xóa dòng giao việc chưa có SL).
+  // Backend route: POST /api/production-orders/:id/record-rolls
+  recordRolls: async (orderId: string, taskCode: string, weights: number[], finish = false) => {
+    const { data } = await apiClient.post(`/production-orders/${orderId}/record-rolls`, { task_code: taskCode, weights, finish });
+    return data as { message: string; rolls: { task_code: string; roll_code: string; qty: number }[]; finished: boolean };
+  },
+  // Các cuộn đã ghi từ 1 dòng việc (mới nhất trước)
+  listRolls: async (orderId: string, taskCode: string) => {
+    const { data } = await apiClient.get(`/production-orders/${orderId}/record-rolls`, { params: { task_code: taskCode } });
+    return (data?.data || []).map((r: any) => ({ ...r, qty: Number(r.qty) || 0 })) as
+      { task_code: string; roll_code: string; qty: number; status: string; created_at: string }[];
+  },
+
   // Hoàn thành 1 dòng phân công (backend tự kiểm tra đủ máy / công nhân / SL thực và ghi kho)
   // Backend route: POST /api/production-orders/:id/complete-tasks
   completeTask: async (orderId: string, taskCode: string) => {

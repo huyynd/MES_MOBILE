@@ -7,6 +7,7 @@ import { Button } from '@/components/Button';
 import { productionApi } from '@/api/production';
 import { ProductionTask } from '@/types/production';
 import { Play, Pause, CheckSquare, CheckCircle2 } from 'lucide-react-native';
+import { RollRecorder } from '@/screens/workOrder/RollRecorder';
 
 export function WorkOrderDetailScreen({ route, navigation }: any) {
   const { task, actor } = route.params as { task: ProductionTask; actor?: string }; // actor: tablet tổ trưởng — công nhân đang điền kết quả
@@ -38,6 +39,8 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
     }
   };
   const notStarted = taskStatus === 'Chờ' || taskStatus === 'Dừng sản xuất';
+  // Thổi / Cắt ghi sản lượng THEO CUỘN (chốt 2026-11-23): mỗi lần ghi = 1 cuộn có mã, nhập kho ngay
+  const byRoll = (task.step_name === 'Thổi' || task.step_name === 'Cắt') && !!task.task_code && taskStatus !== 'Hoàn thành';
   const plan = Number(task.quantity) || 0;
 
   const changeStatus = async (status: 'Đang sản xuất' | 'Dừng sản xuất') => {
@@ -140,9 +143,11 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
 
       </Card>
 
-      {/* Các nút thao tác */}
+      {byRoll && <RollRecorder task={task} onFinished={() => navigation.goBack()} />}
+
+      {/* Các nút thao tác (công đoạn không ghi theo cuộn) */}
       <View style={styles.actionContainer}>
-        {taskStatus === 'Hoàn thành' ? null : notStarted ? (
+        {taskStatus === 'Hoàn thành' || byRoll ? null : notStarted ? (
           <Button
             title="BẮT ĐẦU"
             onPress={handleStart}
