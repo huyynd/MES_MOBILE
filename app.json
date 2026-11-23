@@ -3,7 +3,7 @@
     "name": "MES Ngọc An Thư",
     "slug": "mes-ngoc-an-thu",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "ios": {
@@ -13,8 +13,6 @@
       "package": "vn.ngocanthu.mes",
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.READ_MEDIA_IMAGES",
         "android.permission.READ_MEDIA_VIDEO",
@@ -36,6 +34,13 @@
     "plugins": [
       "expo-secure-store",
       [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Cho phép MES Ngọc An Thư dùng vị trí (GPS) để xác nhận chấm công tại xưởng. Vị trí chỉ được lấy lúc bấm chấm công.",
+          "isAndroidBackgroundLocationEnabled": false
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "cameraPermission": "Cho phép MES Ngọc An Thư dùng camera để chụp ảnh làm bằng chứng sản xuất (sản phẩm, phế phẩm, sự cố máy).",
@@ -46,7 +51,7 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Cho phép MES Ngọc An Thư dùng camera để chụp ảnh và quét mã QR lệnh sản xuất.",
+          "cameraPermission": "Cho phép MES Ngọc An Thư dùng camera để chụp ảnh xác nhận khi chấm công và chụp ảnh bằng chứng sản xuất.",
           "microphonePermission": false,
           "recordAudioAndroid": false
         }

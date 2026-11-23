@@ -5,7 +5,7 @@ App chỉ cài được cho người trong danh sách (tối đa 100 Gmail), t�
 ## 0. Trạng thái chuẩn bị (đã làm trong repo)
 - `app.json`: mã app `vn.ngocanthu.mes` (đổi được cho tới lần tải lên Google Play đầu tiên — sau đó KHÔNG đổi được),
   quyền **camera** (chụp ảnh bằng chứng, quét QR) — có câu xin quyền tiếng Việt;
-  chặn vị trí / micro / đọc toàn bộ thư viện ảnh / vẽ đè màn hình. Chọn ảnh có sẵn dùng trình chọn ảnh hệ thống (không cần quyền).
+  quyền **vị trí (GPS)** chỉ lúc bấm chấm công; chặn vị trí chạy nền / micro / đọc toàn bộ thư viện ảnh / vẽ đè màn hình. Chọn ảnh có sẵn dùng trình chọn ảnh hệ thống (không cần quyền).
 - `eas.json`: build `preview` → file `.apk` (cài tay), `production` → file `.aab` (Google Play, tự tăng số phiên bản),
   `submit` → kênh **internal**.
 - App tự chặn nếu: địa chỉ máy chủ chưa điền (`DIEN-TEN-MIEN-MAY-CHU`) hoặc không phải HTTPS.
@@ -78,7 +78,9 @@ sau khi tạo Service Account cho Google Play). Máy tính bảng tự cập nh�
 | Mục đích | *App functionality*, *Account management* |
 | Bắt buộc hay tùy chọn | Bắt buộc (cần để dùng app) |
 | Ảnh (Photos) | **Có, khi đã làm chức năng chụp ảnh bằng chứng**: *Photos and videos → Photos*, mục đích *App functionality*, lưu trên máy chủ công ty. Chưa có chức năng gửi ảnh thì khai **Không** |
-| Vị trí, danh bạ, tài chính, sức khỏe | **Không** |
+| Ảnh (chấm công) | **Có**: ảnh khuôn mặt khi chấm công — *Photos*, mục đích *App functionality*, lưu trên máy chủ công ty |
+| Vị trí | **Có**: *Precise location*, chỉ lấy lúc bấm chấm công, mục đích *App functionality*, không chia sẻ |
+| Danh bạ, tài chính, sức khỏe | **Không** |
 
 **Government / Financial / Health app**: Không. **News app**: Không.
 
