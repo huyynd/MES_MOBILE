@@ -4,7 +4,7 @@ App chỉ cài được cho người trong danh sách (tối đa 100 Gmail), t�
 
 ## 0. Trạng thái chuẩn bị (đã làm trong repo)
 - `app.json`: mã app `vn.ngocanthu.mes` (đổi được cho tới lần tải lên Google Play đầu tiên — sau đó KHÔNG đổi được),
-  quyền **camera** (chụp ảnh bằng chứng, quét QR) — có câu xin quyền tiếng Việt;
+  quyền **camera** (chụp ảnh chấm công, ảnh bằng chứng) — có câu xin quyền tiếng Việt;
   quyền **vị trí (GPS)** chỉ lúc bấm chấm công; chặn vị trí chạy nền / micro / đọc toàn bộ thư viện ảnh / vẽ đè màn hình. Chọn ảnh có sẵn dùng trình chọn ảnh hệ thống (không cần quyền).
 - `eas.json`: build `preview` → file `.apk` (cài tay), `production` → file `.aab` (Google Play, tự tăng số phiên bản),
   `submit` → kênh **internal**.
@@ -53,6 +53,7 @@ sau khi tạo Service Account cho Google Play). Máy tính bảng tự cập nh�
 - Mô tả ngắn (≤ 80 ký tự): `Ứng dụng nội bộ quản lý sản xuất – xưởng bao bì Ngọc An Thư.`
 - Mô tả đầy đủ:
   > Ứng dụng nội bộ dành cho nhân viên Công ty Bao Bì Ngọc An Thư.
+  > • Tổ trưởng (máy tính bảng của tổ): chấm công vào/ra cho công nhân (mã PIN, ảnh, vị trí), giao việc, ghi sản lượng theo cuộn, xem hiệu suất của tổ.
   > • Công nhân: xem việc được giao hôm nay, ghi nhận sản lượng, theo dõi hiệu suất cá nhân.
   > • Quản lý: tổng quan sản xuất, báo cáo bán hàng – sản xuất – nhân sự – công nợ, hiệu suất nhân viên.
   > Cần tài khoản do công ty cấp để sử dụng.
@@ -62,7 +63,9 @@ sau khi tạo Service Account cho Google Play). Máy tính bảng tự cập nh�
 
 **Ads**: Không có quảng cáo.
 
-**Quyền camera** (Google có thể hỏi): "Chụp ảnh sản phẩm / phế phẩm / sự cố máy làm bằng chứng sản xuất và quét mã QR lệnh sản xuất."
+**Quyền camera** (Google có thể hỏi): "Chụp ảnh người chấm công (vào/ra ca) trên máy tính bảng của tổ và ảnh bằng chứng sản xuất."
+
+**Quyền vị trí** (Google có thể hỏi): "Lấy GPS một lần lúc bấm chấm công để xác nhận chấm công tại xưởng. Không theo dõi liên tục, không chạy nền."
 
 **Content rating**: Danh mục *Utility / Productivity*; trả lời "Không" cho bạo lực, nội dung người lớn, cờ bạc, chia sẻ vị trí, mua hàng trong app…
 
