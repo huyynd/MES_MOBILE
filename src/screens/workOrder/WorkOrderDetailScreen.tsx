@@ -18,6 +18,8 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [actual, setActual] = useState<number>(Number(task.actual_qty) || 0);
+  const [rollKg, setRollKg] = useState(0); // tổng kg các cuộn đã ghi từ việc này (Thổi / Cắt)
+  const produced = actual + rollKg;
   const [addQty, setAddQty] = useState('');
 
   // Ghi thêm sản lượng: SL thực mới = SL hiện tại + số vừa nhập (cùng đường với màn chi tiết lệnh trên web)
@@ -131,19 +133,19 @@ export function WorkOrderDetailScreen({ route, navigation }: any) {
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Đã sản xuất</Text>
-          <Text style={styles.valueSuccess}>{num(actual, 2)} {task.unit}</Text>
+          <Text style={styles.valueSuccess}>{num(produced, 2)} {task.unit}</Text>
         </View>
 
         <View style={styles.infoRow}>
           <Text style={styles.label}>Còn lại</Text>
           <Text style={styles.valueWarning}>
-            {plan ? num(Math.max(plan - actual, 0), 2) : '—'} {task.unit}
+            {plan ? num(Math.max(plan - produced, 0), 2) : '—'} {task.unit}
           </Text>
         </View>
 
       </Card>
 
-      {byRoll && <RollRecorder task={task} onFinished={() => navigation.goBack()} />}
+      {byRoll && <RollRecorder task={task} onFinished={() => navigation.goBack()} onTotal={setRollKg} />}
 
       {/* Các nút thao tác (công đoạn không ghi theo cuộn) */}
       <View style={styles.actionContainer}>

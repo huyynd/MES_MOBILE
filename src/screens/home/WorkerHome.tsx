@@ -127,7 +127,7 @@ export function WorkerHome() {
                   </View>
                   <Text style={styles.product}>{active.product_name}</Text>
                   <Text style={styles.meta}>Máy: {active.machine_name || '—'} · Ca: {active.shift || '—'} · KH: {shortDate(active.planned_date)}</Text>
-                  <Text style={styles.progress}>Đã làm {num(active.actual_qty, 2)} / {num(active.quantity, 2)} {active.unit}</Text>
+                  <Text style={styles.progress}>Đã làm {num((active.actual_qty || 0) + (active.roll_qty || 0), 2)} / {num(active.quantity, 2)} {active.unit}</Text>
                   {active.step_name === 'Thổi' || active.step_name === 'Cắt' ? (
                     // Thổi / Cắt ghi theo CUỘN (chốt 2026-11-23) — mở khung ghi cuộn nhanh ở màn chi tiết
                     <TouchableOpacity style={[styles.saveBtn, { marginTop: 10, justifyContent: 'center', height: 52 }]}
@@ -163,7 +163,7 @@ export function WorkerHome() {
                           <Badge {...WHEN_BADGE[t.when || 'today']} />
                         </View>
                         <Text style={styles.product} numberOfLines={1}>{t.product_name}</Text>
-                        <Text style={styles.meta}>{num(t.actual_qty, 2)} / {num(t.quantity, 2)} {t.unit} · KH {shortDate(t.planned_date)}</Text>
+                        <Text style={styles.meta}>{num((t.actual_qty || 0) + (t.roll_qty || 0), 2)} / {num(t.quantity, 2)} {t.unit} · KH {shortDate(t.planned_date)}</Text>
                       </View>
                       <ChevronRight color={C.muted} size={18} />
                     </Card>

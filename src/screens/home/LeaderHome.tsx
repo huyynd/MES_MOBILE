@@ -138,7 +138,7 @@ export function LeaderHome({ initial }: { initial?: TeamRoster | null }) {
                           <Badge {...WHEN_BADGE[t.when || 'today']} />
                         </View>
                         <Text style={styles.product} numberOfLines={1}>{t.product_name}</Text>
-                        <Text style={styles.meta}>{t.assigned_worker || '—'} · {num(t.actual_qty, 2)} / {num(t.quantity, 2)} {t.unit} · KH {shortDate(t.planned_date)}</Text>
+                        <Text style={styles.meta}>{t.assigned_worker || '—'} · {num((t.actual_qty || 0) + (t.roll_qty || 0), 2)} / {num(t.quantity, 2)} {t.unit} · KH {shortDate(t.planned_date)}</Text>
                       </View>
                       <ChevronRight color={C.muted} size={18} />
                     </Card>

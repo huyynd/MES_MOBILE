@@ -27,6 +27,7 @@ export interface ProductionTask {
   machine_name?: string;
   assigned_worker?: string;
   assigned_worker_id?: string | null; // mã nhân viên (employees.id) — lọc việc theo tổ
+  roll_qty?: number; // tổng kg các cuộn đã ghi trên mobile từ dòng việc này (Thổi / Cắt)
   shift?: string | null;
   planned_date?: string | null; // YYYY-MM-DD
   planned_end_date?: string | null;

@@ -83,7 +83,7 @@ export function WorkOrderListScreen({ navigation }: any) {
           </View>
           <Text style={styles.product} numberOfLines={1}>{item.product_name}</Text>
           <Text style={styles.meta}>
-            {num(item.actual_qty, 2)} / {num(item.quantity, 2)} {item.unit} · KH {shortDate(item.planned_date)}
+            {num((item.actual_qty || 0) + (item.roll_qty || 0), 2)} / {num(item.quantity, 2)} {item.unit} · KH {shortDate(item.planned_date)}
             {director || team ? ` · ${item.assigned_worker || 'chưa giao'}` : ''}{item.machine_name ? ` · ${item.machine_name}` : ''}
           </Text>
         </View>

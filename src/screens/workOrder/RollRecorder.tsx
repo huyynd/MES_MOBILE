@@ -23,7 +23,7 @@ const parseWeights = (s: string): number[] | null => {
 };
 const hhmm = (iso?: string) => (iso ? new Date(iso).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', hour12: false }) : '');
 
-export function RollRecorder({ task, onFinished }: { task: ProductionTask; onFinished: () => void }) {
+export function RollRecorder({ task, onFinished, onTotal }: { task: ProductionTask; onFinished: () => void; onTotal?: (kg: number) => void }) {
   const [rolls, setRolls] = useState<Roll[]>([]);
   const [loading, setLoading] = useState(true);
   const [input, setInput] = useState('');
@@ -43,6 +43,7 @@ export function RollRecorder({ task, onFinished }: { task: ProductionTask; onFin
 
   const last = rolls[0]?.qty;
   const total = rolls.reduce((s, r) => s + r.qty, 0);
+  useEffect(() => { onTotal?.(total); }, [total, onTotal]); // báo tổng kg cuộn lên màn chi tiết (Đã sản xuất / Còn lại)
 
   const save = async (weights: number[]) => {
     if (busy) return;
