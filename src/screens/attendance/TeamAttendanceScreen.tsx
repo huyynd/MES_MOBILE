@@ -175,7 +175,8 @@ export function TeamAttendanceScreen() {
                   const inAt = m.today.find((p) => p.direction === 'IN');
                   const outAt = [...m.today].reverse().find((p) => p.direction === 'OUT');
                   const working = last?.direction === 'IN';
-                  const disabled = !m.has_pin || m.pin_locked;
+                  const done = last?.direction === 'OUT'; // mỗi ngày 1 lần VÀO + 1 lần RA (chốt 2026-11-23)
+                  const disabled = !m.has_pin || m.pin_locked || done;
                   return (
                     <TouchableOpacity key={m.id} disabled={disabled} onPress={() => pick(m)}
                       style={[s.tile, working && s.tileIn, !working && outAt && s.tileOut, disabled && s.dim]}>
@@ -183,7 +184,7 @@ export function TeamAttendanceScreen() {
                       <Text style={s.tileCode}>{m.employee_code}</Text>
                       <Text style={[s.tileState, working ? { color: '#15803d' } : outAt ? { color: '#1d4ed8' } : null]}>
                         {!m.has_pin ? 'Chưa có PIN — báo admin' : m.pin_locked ? 'PIN đang bị khóa'
-                          : working ? `Đang làm · vào ${hhmm(inAt!.at)}` : outAt ? `Đã ra ${hhmm(outAt.at)}` : 'Chưa chấm'}
+                          : working ? `Đang làm · vào ${hhmm(inAt!.at)}` : done ? `Đã chấm đủ hôm nay · ra ${hhmm(outAt!.at)}` : 'Chưa chấm'}
                       </Text>
                     </TouchableOpacity>
                   );
