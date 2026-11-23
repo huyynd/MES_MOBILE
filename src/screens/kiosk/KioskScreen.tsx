@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { shrinkPunchPhoto } from '@/utils/punchPhoto';
 import { CheckCircle2, XCircle, Camera, LogIn, ShieldCheck, Clock } from 'lucide-react-native';
 import { BrandLogo } from '@/components/BrandLogo';
 import { kioskApi, kioskStorage, KioskError, IdentifyResult } from '@/api/kiosk';
@@ -170,13 +170,8 @@ export function KioskScreen({ onExit }: { onExit: () => void }) {
     if (!cam.current || !camReady) return;
     setBusy(true);
     try {
-      const shot = await cam.current.takePictureAsync({ quality: 0.7, shutterSound: false });
-      // Máy chủ nhận tối đa 300 KB, JPEG/WebP → thu về rộng 640px, nén 0.6 (~40–80 KB)
-      const ctx = ImageManipulator.ImageManipulator.manipulate(shot.uri);
-      ctx.resize({ width: 640, height: null });
-      const ref = await ctx.renderAsync();
-      const img = await ref.saveAsync({ compress: 0.6, format: ImageManipulator.SaveFormat.JPEG });
-      await sendPunch(id, { uri: img.uri, width: img.width, height: img.height });
+      const shot = await cam.current.takePictureAsync({ quality: 0.6, shutterSound: false });
+      await sendPunch(id, await shrinkPunchPhoto(shot)); // thu nhỏ đúng tỉ lệ (web: gửi luôn)
     } catch (e: any) {
       setStep({ name: 'result', ok: false, title: 'Không chụp được ảnh', detail: e?.message });
     } finally { setBusy(false); }

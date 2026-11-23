@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { CameraView, useCameraPermissions } from 'expo-camera';
-import * as ImageManipulator from 'expo-image-manipulator';
+import { shrinkPunchPhoto } from '@/utils/punchPhoto';
 import * as Location from 'expo-location';
 import { CheckCircle2, XCircle, Camera, ShieldCheck, Delete, MapPin, Lock } from 'lucide-react-native';
 import { teamApi, TeamIdentify, TeamMember, TeamRoster, Gps } from '@/api/team';
@@ -125,13 +125,8 @@ export function TeamAttendanceScreen() {
     if (!cam.current || !camReady) return;
     setBusy(true);
     try {
-      const shot = await cam.current.takePictureAsync({ quality: 0.7, shutterSound: false });
-      // Máy chủ nhận tối đa 300 KB → thu về rộng 640px, nén 0.6 (~40–80 KB)
-      const ctx = ImageManipulator.ImageManipulator.manipulate(shot.uri);
-      ctx.resize({ width: 640, height: null });
-      const ref = await ctx.renderAsync();
-      const img = await ref.saveAsync({ compress: 0.6, format: ImageManipulator.SaveFormat.JPEG });
-      await sendPunch(id, { uri: img.uri, width: img.width, height: img.height });
+      const shot = await cam.current.takePictureAsync({ quality: 0.6, shutterSound: false });
+      await sendPunch(id, await shrinkPunchPhoto(shot)); // thu nhỏ đúng tỉ lệ (web: gửi luôn)
     } catch (e: any) {
       setStep({ name: 'result', ok: false, title: 'Không chụp được ảnh', detail: e?.message });
     } finally { setBusy(false); }
