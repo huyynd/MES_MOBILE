@@ -61,8 +61,8 @@ function Summary() {
 
           <SectionTitle icon={<Factory size={18} color={C.blue} />} title="Sản xuất" />
           {/* Cùng định nghĩa với web (Báo cáo giám đốc, 11/2026):
-              - Thành phẩm = làm ra TRONG KỲ ở công đoạn cuối, kể cả lệnh tạo trước kỳ (actual)
-              - Tiến độ / còn lại = theo các lệnh TẠO trong kỳ (progress, remaining)
+              - Thành phẩm = làm ra TRONG KỲ ở công đoạn cuối, lệnh KG (actual)
+              - Kế hoạch kỳ = phần còn lại của lệnh cũ còn mở (carry_plan) + lệnh mới tạo trong kỳ (new_plan) — chốt 13/11/2026
               - Tỷ lệ phế = phế ÷ (thành phẩm + phế) */}
           <StatRow>
             <Stat label="SL thành phẩm" value={num(p?.output?.actual, 1)} sub="kg làm ra trong kỳ" tone="green" />
@@ -70,9 +70,12 @@ function Summary() {
               sub={`tỷ lệ phế ${p?.output?.scrap_rate == null ? '—' : pct(p?.output?.scrap_rate)}`} tone="amber" />
           </StatRow>
           <Card variant="outlined">
-            <Text style={styles.cardTitle}>Tiến độ lệnh tạo trong kỳ</Text>
-            <Row label="Kế hoạch" value={`${num(p?.output?.plan, 1)} kg`} />
-            <Row label="Đã làm" value={`${num(p?.output?.progress ?? p?.output?.actual, 1)} kg`} tone="green" />
+            <Text style={styles.cardTitle}>Tiến độ so với kế hoạch kỳ</Text>
+            <Row label="Kế hoạch kỳ" value={`${num(p?.output?.plan, 1)} kg`} />
+            {p?.output?.carry_plan != null && (
+              <Row label="  · chuyển kỳ trước / mới" value={`${num(p.output.carry_plan, 1)} / ${num(p.output.new_plan, 1)} kg`} />
+            )}
+            <Row label="Làm trong kỳ" value={`${num(p?.output?.progress ?? p?.output?.actual, 1)} kg`} tone="green" />
             <Row label="Đạt" value={p?.output?.plan > 0 ? pct(((p?.output?.progress ?? p?.output?.actual) || 0) / p.output.plan * 100, 0) : '—'} />
             {p?.output?.over > 0
               ? <Row label="Vượt kế hoạch" value={`${num(p.output.over, 1)} kg`} tone="blue" />
